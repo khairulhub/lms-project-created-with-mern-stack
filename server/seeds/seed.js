@@ -7,6 +7,8 @@ const SiteConfig = require("../models/SiteConfig");
 const CourseHeroSection = require("../models/CourseHeroSection");
 const CoursePaymentSettings = require("../models/CoursePaymentSettings");
 const PaymentMethod = require("../models/PaymentMethod");
+const CourseHighlightSection = require("../models/CourseHighlightSection");
+const CourseHighlightItem = require("../models/CourseHighlightItem");
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 // Upsert one document by a unique key, without touching it if it already exists.
@@ -106,8 +108,9 @@ const seedDatabase = async () => {
     "categories"
   );
 
-  const webCat = categories.find((c) => c.slug === "web-development");
-  const backendCat = categories.find((c) => c.slug === "backend");
+  const mernCat = categories.find((c) => c.slug === "mern-stack");
+  const laravelCat = categories.find((c) => c.slug === "php-laravel");
+  const networkingCat = categories.find((c) => c.slug === "networking");
 
   // ── BLOGS ──────────────────────────────────────────────────────────────────
   console.log("📝 Blogs");
@@ -120,7 +123,7 @@ const seedDatabase = async () => {
         excerpt: "A complete beginner guide to building full stack apps with MongoDB, Express, React, and Node.js",
         content: "<h2>Introduction</h2><p>The MERN stack is one of the most popular full stack JavaScript frameworks. In this guide we'll walk through building your first MERN application from scratch.</p><h2>What is MERN?</h2><p>MERN stands for MongoDB, Express.js, React.js, and Node.js. Together they form a powerful, end-to-end JavaScript development stack.</p>",
         coverImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800",
-        category: webCat._id,
+        category: mernCat._id,
         author: instructorUser._id,
         isPublished: true,
         publishedAt: new Date(),
@@ -132,7 +135,7 @@ const seedDatabase = async () => {
         excerpt: "Learn how to design clean, scalable, and developer-friendly REST APIs",
         content: "<h2>REST API Basics</h2><p>A well-designed REST API is the backbone of any modern web application. Let's explore the key principles that make APIs great.</p><h2>Use Proper HTTP Methods</h2><p>GET for fetching, POST for creating, PUT/PATCH for updating, DELETE for removing resources.</p>",
         coverImage: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800",
-        category: backendCat._id,
+        category: mernCat._id,
         author: instructorUser._id,
         isPublished: true,
         publishedAt: new Date(Date.now() - 86400000),
@@ -316,6 +319,89 @@ const seedDatabase = async () => {
     ],
     (m) => ({ label: m.label }), // unique key
     "payment methods"
+  );
+
+  // ── COURSE DETAILS → HIGHLIGHTS SECTION (per category) ──────────────────────
+  // The "এই কোর্সে তুমি কী পাবে?" cards + tech-tag list — now ONE set per
+  // category (MERN / PHP-Laravel / Networking) instead of a single hardcoded
+  // block. Public Home page shows whichever category is selected (MERN by
+  // default); admin can fully CRUD the cards per category from
+  // Admin → Course Details → Highlights Section.
+  console.log("✨ Course Highlights (per category)");
+
+  // -- MERN Stack --------------------------------------------------------
+  await upsertOne(
+    CourseHighlightSection,
+    { category: mernCat._id },
+    {
+      category: mernCat._id,
+      heading: "এই কোর্সে তুমি কী পাবে?",
+      subtitle: "একটাই কোর্সে সবকিছু — শেখা, প্র্যাকটিস, প্রজেক্ট এবং ক্যারিয়ার সাপোর্ট",
+      techTagsLabel: "যা যা শিখবে:",
+      techTags: ["HTML", "CSS", "Tailwind", "JavaScript", "React", "Node.js", "Express", "MongoDB", "Firebase", "Git", "REST API", "JWT"],
+    },
+    "MERN highlight section"
+  );
+  await upsertMany(
+    CourseHighlightItem,
+    [
+      { category: mernCat._id, icon: "🤖", title: "AI-Powered Learning", description: "AI tools দিয়ে faster এবং smarter ভাবে কোড শেখো", order: 0, createdBy: adminUser._id },
+      { category: mernCat._id, icon: "📋", title: "Structured Path", description: "Week-by-week structured curriculum তোমাকে গাইড করবে", order: 1, createdBy: adminUser._id },
+      { category: mernCat._id, icon: "🌐", title: "Full Stack Skills", description: "Frontend থেকে Backend — সব কিছু এক জায়গায়", order: 2, createdBy: adminUser._id },
+      { category: mernCat._id, icon: "💼", title: "Job Ready", description: "ইন্টারভিউ প্রেপ, CV রিভিউ এবং জব সাপোর্ট", order: 3, createdBy: adminUser._id },
+    ],
+    (i) => ({ category: i.category, title: i.title }),
+    "MERN highlight items"
+  );
+
+  // -- PHP / Laravel ------------------------------------------------------
+  await upsertOne(
+    CourseHighlightSection,
+    { category: laravelCat._id },
+    {
+      category: laravelCat._id,
+      heading: "এই কোর্সে তুমি কী পাবে?",
+      subtitle: "একটাই কোর্সে সবকিছু — শেখা, প্র্যাকটিস, প্রজেক্ট এবং ক্যারিয়ার সাপোর্ট",
+      techTagsLabel: "যা যা শিখবে:",
+      techTags: ["HTML", "CSS", "Bootstrap", "PHP", "Laravel", "Blade", "MySQL", "Eloquent ORM", "Composer", "Git", "REST API", "Sanctum"],
+    },
+    "PHP/Laravel highlight section"
+  );
+  await upsertMany(
+    CourseHighlightItem,
+    [
+      { category: laravelCat._id, icon: "🤖", title: "AI-Powered Learning", description: "AI tools দিয়ে faster এবং smarter ভাবে কোড শেখো", order: 0, createdBy: adminUser._id },
+      { category: laravelCat._id, icon: "📋", title: "Structured Path", description: "Week-by-week structured curriculum তোমাকে গাইড করবে", order: 1, createdBy: adminUser._id },
+      { category: laravelCat._id, icon: "🐘", title: "Laravel Mastery", description: "MVC, Eloquent, Blade — Laravel-এর সব core concept শিখবে", order: 2, createdBy: adminUser._id },
+      { category: laravelCat._id, icon: "💼", title: "Job Ready", description: "ইন্টারভিউ প্রেপ, CV রিভিউ এবং জব সাপোর্ট", order: 3, createdBy: adminUser._id },
+    ],
+    (i) => ({ category: i.category, title: i.title }),
+    "PHP/Laravel highlight items"
+  );
+
+  // -- Networking ----------------------------------------------------------
+  await upsertOne(
+    CourseHighlightSection,
+    { category: networkingCat._id },
+    {
+      category: networkingCat._id,
+      heading: "এই কোর্সে তুমি কী পাবে?",
+      subtitle: "একটাই কোর্সে সবকিছু — শেখা, প্র্যাকটিস, প্রজেক্ট এবং ক্যারিয়ার সাপোর্ট",
+      techTagsLabel: "যা যা শিখবে:",
+      techTags: ["Networking Basics", "TCP/IP", "Cisco Packet Tracer", "MikroTik", "Routing", "Switching", "Firewall", "VPN", "Network Security", "Wireless"],
+    },
+    "Networking highlight section"
+  );
+  await upsertMany(
+    CourseHighlightItem,
+    [
+      { category: networkingCat._id, icon: "🤖", title: "AI-Powered Learning", description: "AI tools দিয়ে faster এবং smarter ভাবে শেখো", order: 0, createdBy: adminUser._id },
+      { category: networkingCat._id, icon: "📋", title: "Structured Path", description: "Week-by-week structured curriculum তোমাকে গাইড করবে", order: 1, createdBy: adminUser._id },
+      { category: networkingCat._id, icon: "🔌", title: "Hands-on Labs", description: "Cisco ও MikroTik দিয়ে practical lab ও simulation", order: 2, createdBy: adminUser._id },
+      { category: networkingCat._id, icon: "💼", title: "Job Ready", description: "ইন্টারভিউ প্রেপ, CV রিভিউ এবং জব সাপোর্ট", order: 3, createdBy: adminUser._id },
+    ],
+    (i) => ({ category: i.category, title: i.title }),
+    "Networking highlight items"
   );
 
   // ── ADD FUTURE SECTIONS HERE ──────────────────────────────────────────────

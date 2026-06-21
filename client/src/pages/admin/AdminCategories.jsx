@@ -3,6 +3,7 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
 import { FiPlus, FiEdit2, FiTrash2, FiX, FiSave } from "react-icons/fi";
+import IconPicker from "../../components/common/IconPicker";
 
 const emptyForm = { name: "", description: "", icon: "📁", isActive: true };
 
@@ -116,8 +117,7 @@ const AdminCategories = () => {
               <div className="flex gap-3">
                 <div className="w-20">
                   <label className="block text-xs font-medium text-gray-400 mb-1">Icon</label>
-                  <input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })}
-                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2.5 text-center text-2xl focus:outline-none focus:border-cyan-500" />
+                  <IconPicker value={form.icon} onChange={(ic) => setForm({ ...form, icon: ic })} />
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs font-medium text-gray-400 mb-1">Name *</label>

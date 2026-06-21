@@ -10,6 +10,8 @@ import {
 import CourseHeroSection from "./CourseDetails/CourseHeroSection";
 import CoursePaymentSection from "./CourseDetails/CoursePaymentSection";
 import Category from "./CourseDetails/Category";
+import CourseHighlightsSection from "./CourseDetails/CourseHighlightsSection";
+import CourseVideoSection from "./CourseDetails/CourseVideoSection";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared small components (used by the Course sections below)
@@ -50,75 +52,6 @@ const Accordion = ({ title, children, defaultOpen = false }) => {
 };
 
 
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 3 — HIGHLIGHTS
-// ════════════════════════════════════════════════════════════════
-const CourseHighlightsSection = () => (
-  <section style={{ background: "#0d011f" }} className="py-16 px-4">
-    <div className="max-w-6xl mx-auto">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-        এই কোর্সে তুমি কী পাবে?
-      </h2>
-      <p className="text-gray-400 text-center text-sm mb-10">
-        একটাই কোর্সে সবকিছু — শেখা, প্র্যাকটিস, প্রজেক্ট এবং ক্যারিয়ার সাপোর্ট
-      </p>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {[
-          { emoji: "🤖", title: "AI-Powered Learning", desc: "AI tools দিয়ে faster এবং smarter ভাবে কোড শেখো" },
-          { emoji: "📋", title: "Structured Path", desc: "Week-by-week structured curriculum তোমাকে গাইড করবে" },
-          { emoji: "🌐", title: "Full Stack Skills", desc: "Frontend থেকে Backend — সব কিছু এক জায়গায়" },
-          { emoji: "💼", title: "Job Ready", desc: "ইন্টারভিউ প্রেপ, CV রিভিউ এবং জব সাপোর্ট" },
-        ].map(item => (
-          <div key={item.title}
-            className="rounded-2xl p-5 border border-purple-800 hover:border-purple-500 transition-all group"
-            style={{ background: "linear-gradient(135deg, #1a0533, #120326)" }}>
-            <div className="text-4xl mb-3">{item.emoji}</div>
-            <h3 className="text-white font-bold text-sm mb-2 group-hover:text-purple-300 transition-colors">{item.title}</h3>
-            <p className="text-gray-400 text-xs leading-relaxed">{item.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Tech tags */}
-      <div className="text-center">
-        <p className="text-gray-500 text-xs mb-4">যা যা শিখবে:</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {["HTML", "CSS", "Tailwind", "JavaScript", "React", "Node.js", "Express", "MongoDB", "Firebase", "Git", "REST API", "JWT"].map(t => (
-            <span key={t} className="border border-purple-800 text-purple-200 text-xs font-medium px-3 py-1.5 rounded-full"
-              style={{ background: "#1a0533" }}>
-              {t}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 4 — VIDEO
-// ════════════════════════════════════════════════════════════════
-const CourseVideoSection = () => (
-  <section style={{ background: "#120326" }} className="py-16 px-4">
-    <div className="max-w-4xl mx-auto">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-        কোর্সের একটু আভাস নাও
-      </h2>
-      <p className="text-gray-400 text-center text-sm mb-8">ফ্রি প্রিভিউতে দেখো আমরা কীভাবে পড়াই</p>
-      <div className="relative w-full rounded-2xl overflow-hidden border border-purple-800" style={{ aspectRatio: "16/9", background: "#0d011f" }}>
-        <iframe
-          src="https://www.youtube.com/embed/zAbT_zvSaM4"
-          title="Course Preview"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="absolute inset-0 w-full h-full"
-        />
-      </div>
-    </div>
-  </section>
-);
 
 // ════════════════════════════════════════════════════════════════
 // COURSE SECTION 5 — WHAT YOU'LL LEARN
@@ -482,9 +415,18 @@ const Home = () => {
   const [blogs, setBlogs] = useState([]);
   const [loadingCats, setLoadingCats] = useState(true);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
+  // Which category's Highlights section is currently shown. Defaults to
+  // "mern-stack" (the existing/default data); if that category doesn't
+  // exist for some reason, falls back to the first category once loaded.
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState("mern-stack");
 
   useEffect(() => {
-    api.get("/categories").then((r) => { setCategories(r.data); setLoadingCats(false); }).catch(() => setLoadingCats(false));
+    api.get("/categories").then((r) => {
+      setCategories(r.data);
+      setLoadingCats(false);
+      const hasDefault = r.data.some((c) => c.slug === "mern-stack");
+      if (!hasDefault && r.data.length > 0) setSelectedCategorySlug(r.data[0].slug);
+    }).catch(() => setLoadingCats(false));
     api.get("/blogs?limit=6").then((r) => { setBlogs(r.data.blogs); setLoadingBlogs(false); }).catch(() => setLoadingBlogs(false));
   }, []);
 
@@ -495,8 +437,13 @@ const Home = () => {
          ══════════════════════════════════════════════════════════════ */}
       <CourseHeroSection />
       <CoursePaymentSection />
-      <Category loadingCats={loadingCats} categories={categories} />
-      <CourseHighlightsSection />
+      <Category
+        loadingCats={loadingCats}
+        categories={categories}
+        selectedSlug={selectedCategorySlug}
+        onSelect={setSelectedCategorySlug}
+      />
+      <CourseHighlightsSection categorySlug={selectedCategorySlug} />
       <CourseVideoSection />
       <CourseWhatYouLearnSection />
       <CourseCurriculumSection />

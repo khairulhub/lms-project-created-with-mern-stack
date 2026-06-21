@@ -34,6 +34,7 @@ const DashboardLayout = ({ children }) => {
       children: [
         { to: "/admin/course-details/hero-section", label: "Course Hero Section" },
         { to: "/admin/course-details/payment-method", label: "Payment Method" },
+        { to: "/admin/course-details/highlights", label: "Highlights Section" },
       ],
     },
     { to: "/admin/navbar", icon: <FiGlobe />, label: "Navbar Settings" },

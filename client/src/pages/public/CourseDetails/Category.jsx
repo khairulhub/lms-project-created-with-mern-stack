@@ -1,12 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import {
-  FiArrowRight, FiCalendar, FiUser,
-  FiCheck, FiChevronDown, FiChevronUp, FiStar,
-  FiPlay, FiThumbsUp,
-} from "react-icons/fi";
 
-const Category = ({loadingCats, categories}) => {
+// Category cards on the home page. Instead of navigating to a separate page,
+// clicking a category just selects it — the CourseHighlightsSection right
+// below switches to show that category's data. `selectedSlug` controls which
+// card is visually highlighted as active; `onSelect` is called with the
+// clicked category's slug.
+const Category = ({ loadingCats, categories, selectedSlug, onSelect }) => {
     return (
          <section className="py-20 px-4" style={{ background: "#0d011f" }}>
                 <div className="max-w-7xl mx-auto">
@@ -23,19 +22,23 @@ const Category = ({loadingCats, categories}) => {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                      {categories.map((cat) => (
-                        <Link
-                          key={cat._id}
-                          to={`/categories/${cat.slug}`}
-                          className="group bg-gray-900 border border-gray-800 hover:border-cyan-500/40 rounded-xl p-5 text-center transition-all hover:bg-gray-800/60"
-                        >
-                          <div className="text-4xl mb-3">{cat.icon}</div>
-                          <div className="text-white font-semibold text-sm group-hover:text-cyan-400 transition-colors">{cat.name}</div>
-                          {cat.description && (
-                            <div className="text-gray-500 text-xs mt-1 line-clamp-2">{cat.description}</div>
-                          )}
-                        </Link>
-                      ))}
+                      {categories.map((cat) => {
+                        const isActive = cat.slug === selectedSlug;
+                        return (
+                          <button
+                            key={cat._id}
+                            type="button"
+                            onClick={() => onSelect?.(cat.slug)}
+                            className={`group bg-gray-900 border rounded-xl p-5 text-center transition-all hover:bg-gray-800/60 ${
+                              isActive ? "border-cyan-500 bg-gray-800/60" : "border-gray-800 hover:border-cyan-500/40"
+                            }`}
+                          >
+                            <div className="text-4xl mb-3">{cat.icon}</div>
+                            <div className={`font-semibold text-sm transition-colors ${isActive ? "text-cyan-400" : "text-white group-hover:text-cyan-400"}`}>{cat.name}</div>
+                            
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
         

@@ -20,6 +20,10 @@ const {
   getPaymentSettings, updatePaymentSettings,
   getPaymentMethods, getAllPaymentMethods, createPaymentMethod, updatePaymentMethod, deletePaymentMethod,
 } = require("../controllers/coursePaymentController");
+const {
+  getCourseHighlights, getAdminCourseHighlights, updateCourseHighlightSection,
+  createCourseHighlightItem, updateCourseHighlightItem, deleteCourseHighlightItem,
+} = require("../controllers/courseHighlightsController");
 
 // ─── AUTH ────────────────────────────────────────────────────────────────────
 router.post("/auth/firebase-sync", verifyFirebaseToken, firebaseSync);
@@ -87,5 +91,18 @@ router.get("/admin/course-payment/methods", protect, adminOnly, getAllPaymentMet
 router.post("/admin/course-payment/methods", protect, adminOnly, createPaymentMethod);
 router.put("/admin/course-payment/methods/:id", protect, adminOnly, updatePaymentMethod);
 router.delete("/admin/course-payment/methods/:id", protect, adminOnly, deletePaymentMethod);
+
+// ─── COURSE DETAILS → HIGHLIGHTS SECTION (per-category, admin-editable) ──────
+// Public: fetch by category slug (or id) — returns { category, section, items }
+router.get("/course-highlights/:categorySlug", getCourseHighlights);
+
+// Admin: fetch everything (incl. inactive items) for a category
+router.get("/admin/course-highlights/:categoryId", protect, adminOnly, getAdminCourseHighlights);
+// Admin: update that category's section heading/subtitle/tech-tags
+router.put("/admin/course-highlights/:categoryId/section", protect, adminOnly, updateCourseHighlightSection);
+// Admin: full CRUD on individual highlight cards within a category
+router.post("/admin/course-highlights/:categoryId/items", protect, adminOnly, createCourseHighlightItem);
+router.put("/admin/course-highlights/items/:id", protect, adminOnly, updateCourseHighlightItem);
+router.delete("/admin/course-highlights/items/:id", protect, adminOnly, deleteCourseHighlightItem);
 
 module.exports = router;
