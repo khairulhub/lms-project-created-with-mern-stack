@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: #374151;
+    border-radius: 3px;
+  }
+
+  /* Prose styles for blog content */
+  .prose h1, .prose h2, .prose h3, .prose h4 {
+    @apply text-white font-bold mt-6 mb-3;
+  }
+  .prose h2 { @apply text-2xl; }
+  .prose h3 { @apply text-xl; }
+  .prose p { @apply mb-4 leading-relaxed; }
+  .prose a { @apply text-cyan-400 hover:underline; }
+  .prose ul, .prose ol { @apply mb-4 pl-6; }
+  .prose li { @apply mb-1; }
+  .prose ul { @apply list-disc; }
+  .prose ol { @apply list-decimal; }
+  .prose code { @apply bg-gray-800 text-cyan-300 px-1.5 py-0.5 rounded text-sm font-mono; }
+  .prose pre { @apply bg-gray-800 p-4 rounded-xl overflow-x-auto mb-4; }
+  .prose pre code { @apply bg-transparent p-0; }
+  .prose blockquote { @apply border-l-4 border-cyan-500 pl-4 italic text-gray-400 my-4; }
+  .prose img { @apply rounded-xl my-4 max-w-full; }
+  .prose strong { @apply text-white font-bold; }
+
+  /* Reusable gradient-text class — used for admin-selected portions of
+     editable headings (e.g. Course Hero Section). Plain CSS on purpose:
+     this class gets applied to text that comes from the database at
+     runtime, which Tailwind's JIT scanner never sees, so a Tailwind
+     utility combo would get purged from the build. This plain class
+     always survives. */
+  .gradient-text {
+    background: linear-gradient(to right, #c084fc, #f472b6); /* purple-400 → pink-400 */
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
