@@ -35,6 +35,8 @@ const DashboardLayout = ({ children }) => {
         { to: "/admin/course-details/hero-section", label: "Course Hero Section" },
         { to: "/admin/course-details/payment-method", label: "Payment Method" },
         { to: "/admin/course-details/highlights", label: "Highlights Section" },
+        { to: "/admin/course-details/video", label: "Video Section" },
+        { to: "/admin/course-details/what-you-learn", label: "What You'll Learn" },
       ],
     },
     { to: "/admin/navbar", icon: <FiGlobe />, label: "Navbar Settings" },

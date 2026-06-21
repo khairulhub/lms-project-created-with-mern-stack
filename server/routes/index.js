@@ -24,6 +24,15 @@ const {
   getCourseHighlights, getAdminCourseHighlights, updateCourseHighlightSection,
   createCourseHighlightItem, updateCourseHighlightItem, deleteCourseHighlightItem,
 } = require("../controllers/courseHighlightsController");
+const {
+  getCourseVideo, getAdminCourseVideo, updateCourseVideo,
+  uploadCourseVideo, deleteCourseVideoUpload,
+} = require("../controllers/courseVideoController");
+const {
+  getWhatYouLearn, getAdminWhatYouLearn, updateWhatYouLearnSection,
+  createWhatYouLearnItem, updateWhatYouLearnItem, deleteWhatYouLearnItem,
+} = require("../controllers/courseWhatYouLearnController");
+const { uploadVideo } = require("../config/upload");
 
 // ─── AUTH ────────────────────────────────────────────────────────────────────
 router.post("/auth/firebase-sync", verifyFirebaseToken, firebaseSync);
@@ -104,5 +113,28 @@ router.put("/admin/course-highlights/:categoryId/section", protect, adminOnly, u
 router.post("/admin/course-highlights/:categoryId/items", protect, adminOnly, createCourseHighlightItem);
 router.put("/admin/course-highlights/items/:id", protect, adminOnly, updateCourseHighlightItem);
 router.delete("/admin/course-highlights/items/:id", protect, adminOnly, deleteCourseHighlightItem);
+
+// ─── COURSE DETAILS → VIDEO SECTION (per-category, admin-editable) ───────────
+// Public: fetch by category slug (or id)
+router.get("/course-video/:categorySlug", getCourseVideo);
+
+// Admin: fetch / update text fields (heading, subtitle, YouTube URL, videoType)
+router.get("/admin/course-video/:categoryId", protect, adminOnly, getAdminCourseVideo);
+router.put("/admin/course-video/:categoryId", protect, adminOnly, updateCourseVideo);
+
+// Admin: upload a video file (max 200MB, validated in config/upload.js) —
+// multer's `uploadVideo.single("video")` runs BEFORE the controller, so by
+// the time uploadCourseVideo() executes, req.file is already saved to disk.
+router.post("/admin/course-video/:categoryId/upload", protect, adminOnly, uploadVideo.single("video"), uploadCourseVideo);
+router.delete("/admin/course-video/:categoryId/upload", protect, adminOnly, deleteCourseVideoUpload);
+
+// ─── COURSE DETAILS → WHAT YOU'LL LEARN SECTION (per-category) ───────────────
+router.get("/course-what-you-learn/:categorySlug", getWhatYouLearn);                                          // public
+
+router.get("/admin/course-what-you-learn/:categoryId", protect, adminOnly, getAdminWhatYouLearn);
+router.put("/admin/course-what-you-learn/:categoryId/section", protect, adminOnly, updateWhatYouLearnSection);
+router.post("/admin/course-what-you-learn/:categoryId/items", protect, adminOnly, createWhatYouLearnItem);
+router.put("/admin/course-what-you-learn/items/:id", protect, adminOnly, updateWhatYouLearnItem);
+router.delete("/admin/course-what-you-learn/items/:id", protect, adminOnly, deleteWhatYouLearnItem);
 
 module.exports = router;

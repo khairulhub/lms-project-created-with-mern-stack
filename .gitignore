@@ -3,3 +3,8 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# Uploaded course-preview videos (can be up to 200MB each) — never commit
+# these to git. The folder itself is kept via uploads/videos/.gitkeep.
+server/uploads/videos/*
+!server/uploads/videos/.gitkeep

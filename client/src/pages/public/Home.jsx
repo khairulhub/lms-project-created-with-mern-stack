@@ -4,7 +4,7 @@ import api from "../../utils/api";
 import PublicLayout from "../../components/layout/PublicLayout";
 import {
   FiArrowRight, FiCalendar, FiUser,
-  FiCheck, FiChevronDown, FiChevronUp, FiStar,
+  FiChevronDown, FiChevronUp, FiStar,
   FiPlay, FiThumbsUp,
 } from "react-icons/fi";
 import CourseHeroSection from "./CourseDetails/CourseHeroSection";
@@ -12,6 +12,7 @@ import CoursePaymentSection from "./CourseDetails/CoursePaymentSection";
 import Category from "./CourseDetails/Category";
 import CourseHighlightsSection from "./CourseDetails/CourseHighlightsSection";
 import CourseVideoSection from "./CourseDetails/CourseVideoSection";
+import CourseWhatYouLearnSection from "./CourseDetails/CourseWhatYouLearnSection";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared small components (used by the Course sections below)
@@ -54,47 +55,27 @@ const Accordion = ({ title, children, defaultOpen = false }) => {
 
 
 // ════════════════════════════════════════════════════════════════
-// COURSE SECTION 5 — WHAT YOU'LL LEARN
+// COURSE SECTION 3 — HIGHLIGHTS
+// Now imported from ./CourseDetails/CourseHighlightsSection — fetches its
+// own data from /api/course-highlights/:categorySlug (admin-editable per
+// category from Admin → Course Details → Highlights Section). The selected
+// category (from the Category section above) decides which dataset shows.
 // ════════════════════════════════════════════════════════════════
-const CourseWhatYouLearnSection = () => (
-  <section style={{ background: "#0d011f" }} className="py-16 px-4">
-    <div className="max-w-6xl mx-auto">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-        কী কী শিখবে এই কোর্সে?
-      </h2>
-      <p className="text-gray-400 text-center text-sm mb-10">
-        শেষ করলে তুমি একজন দক্ষ Full Stack Developer হয়ে যাবে
-      </p>
-      <div className="rounded-2xl border border-purple-800 p-8"
-        style={{ background: "linear-gradient(135deg, #1a0533, #120326)" }}>
-        <div className="grid sm:grid-cols-2 gap-4">
-          {[
-            "HTML5 ও CSS3 দিয়ে সুন্দর ওয়েবসাইট বানানো",
-            "Tailwind CSS দিয়ে Responsive Design",
-            "JavaScript ES6+ এর সব আধুনিক ফিচার",
-            "React.js দিয়ে Dynamic UI তৈরি",
-            "React Router, Context API, Hooks",
-            "Node.js ও Express দিয়ে REST API",
-            "MongoDB ও Mongoose দিয়ে Database",
-            "Firebase Authentication সেটআপ",
-            "JWT দিয়ে Secure Login System",
-            "Git ও GitHub ব্যবহার",
-            "Vercel ও Netlify তে Deploy করা",
-            "Interview Preparation ও DSA Basics",
-          ].map((t, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.4)" }}>
-                <FiCheck size={11} className="text-green-400" />
-              </div>
-              <span className="text-gray-300 text-sm leading-relaxed">{t}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
-);
+
+
+// ════════════════════════════════════════════════════════════════
+// COURSE SECTION 4 — VIDEO
+// Now imported from ./CourseDetails/CourseVideoSection — fetches its own
+// data from /api/course-video/:categorySlug (admin-editable per category;
+// admin can pick a YouTube URL or upload a video file, max 200MB).
+// ════════════════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════════════════
+// COURSE SECTION 5 — WHAT YOU'LL LEARN
+// Now imported from ./CourseDetails/CourseWhatYouLearnSection — fetches its
+// own data from /api/course-what-you-learn/:categorySlug (admin-editable
+// per category from Admin → Course Details → What You'll Learn).
+// ════════════════════════════════════════════════════════════════
 
 // ════════════════════════════════════════════════════════════════
 // COURSE SECTION 6 — CURRICULUM
@@ -444,8 +425,8 @@ const Home = () => {
         onSelect={setSelectedCategorySlug}
       />
       <CourseHighlightsSection categorySlug={selectedCategorySlug} />
-      <CourseVideoSection />
-      <CourseWhatYouLearnSection />
+      <CourseVideoSection categorySlug={selectedCategorySlug} />
+      <CourseWhatYouLearnSection categorySlug={selectedCategorySlug} />
       <CourseCurriculumSection />
       <CourseProjectsSection />
       <CourseSupportSection />
@@ -454,64 +435,8 @@ const Home = () => {
       <CourseFAQSection />
       <CourseCTASection />
 
-      {/* ══════════════════════════════════════════════════════════════
-          ORIGINAL HOME PAGE CONTENT — shown below the course content
-         ══════════════════════════════════════════════════════════════ */}
 
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/4 w-[300px] h-[300px] bg-purple-500/5 rounded-full blur-3xl" />
-
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm px-4 py-1.5 rounded-full mb-6">
-            <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-            Full Stack MERN Starter Template
-          </div>
-
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6">
-            Build Faster with
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
-              MERN Starter
-            </span>
-          </h1>
-
-          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            A production-ready MERN stack template with Firebase Auth, role-based dashboards (Admin / Instructor / User), and a full blog & category system.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/signup"
-              className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 text-base"
-            >
-              Get Started Free
-            </Link>
-            <Link
-              to="/blogs"
-              className="border border-gray-700 hover:border-gray-500 text-white font-medium px-8 py-4 rounded-xl transition-colors flex items-center justify-center gap-2 text-base"
-            >
-              Read Blogs <FiArrowRight />
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-6 mt-16 max-w-lg mx-auto">
-            {[
-              { label: "Roles", value: "3" },
-              { label: "Tech Stack", value: "MERN" },
-              { label: "Auth", value: "Firebase" },
-            ].map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-3xl font-bold text-cyan-400">{s.value}</div>
-                <div className="text-gray-500 text-sm">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+ 
 
       {/* ── FEATURED COURSE ───────────────────────────────────────────────── */}
       <section className="py-20 px-4 bg-gray-900/40">

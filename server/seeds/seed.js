@@ -9,6 +9,9 @@ const CoursePaymentSettings = require("../models/CoursePaymentSettings");
 const PaymentMethod = require("../models/PaymentMethod");
 const CourseHighlightSection = require("../models/CourseHighlightSection");
 const CourseHighlightItem = require("../models/CourseHighlightItem");
+const CourseVideoSection = require("../models/CourseVideoSection");
+const CourseWhatYouLearnSection = require("../models/CourseWhatYouLearnSection");
+const CourseWhatYouLearnItem = require("../models/CourseWhatYouLearnItem");
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 // Upsert one document by a unique key, without touching it if it already exists.
@@ -402,6 +405,144 @@ const seedDatabase = async () => {
     ],
     (i) => ({ category: i.category, title: i.title }),
     "Networking highlight items"
+  );
+
+  // ── COURSE DETAILS → VIDEO SECTION (per category) ───────────────────────────
+  // The "কোর্সের একটু আভাস নাও" preview-video block — one settings doc per
+  // category. Defaults to the same YouTube embed that used to be hardcoded;
+  // admin can switch to an uploaded file anytime from the admin panel.
+  console.log("🎬 Course Video section");
+  await upsertOne(
+    CourseVideoSection,
+    { category: mernCat._id },
+    {
+      category: mernCat._id,
+      heading: "কোর্সের একটু আভাস নাও",
+      subtitle: "ফ্রি প্রিভিউতে দেখো আমরা কীভাবে পড়াই",
+      videoType: "youtube",
+      videoUrl: "https://www.youtube.com/embed/zAbT_zvSaM4",
+    },
+    "MERN video section"
+  );
+  await upsertOne(
+    CourseVideoSection,
+    { category: laravelCat._id },
+    {
+      category: laravelCat._id,
+      heading: "কোর্সের একটু আভাস নাও",
+      subtitle: "ফ্রি প্রিভিউতে দেখো আমরা কীভাবে পড়াই",
+      videoType: "youtube",
+      videoUrl: "https://www.youtube.com/embed/zAbT_zvSaM4",
+    },
+    "PHP/Laravel video section"
+  );
+  await upsertOne(
+    CourseVideoSection,
+    { category: networkingCat._id },
+    {
+      category: networkingCat._id,
+      heading: "কোর্সের একটু আভাস নাও",
+      subtitle: "ফ্রি প্রিভিউতে দেখো আমরা কীভাবে পড়াই",
+      videoType: "youtube",
+      videoUrl: "https://www.youtube.com/embed/zAbT_zvSaM4",
+    },
+    "Networking video section"
+  );
+
+  // ── COURSE DETAILS → WHAT YOU'LL LEARN SECTION (per category) ───────────────
+  console.log("📚 Course What-You'll-Learn (per category)");
+
+  // -- MERN Stack --------------------------------------------------------
+  await upsertOne(
+    CourseWhatYouLearnSection,
+    { category: mernCat._id },
+    {
+      category: mernCat._id,
+      heading: "কী কী শিখবে এই কোর্সে?",
+      subtitle: "শেষ করলে তুমি একজন দক্ষ Full Stack Developer হয়ে যাবে",
+    },
+    "MERN what-you-learn section"
+  );
+  await upsertMany(
+    CourseWhatYouLearnItem,
+    [
+      "HTML5 ও CSS3 দিয়ে সুন্দর ওয়েবসাইট বানানো",
+      "Tailwind CSS দিয়ে Responsive Design",
+      "JavaScript ES6+ এর সব আধুনিক ফিচার",
+      "React.js দিয়ে Dynamic UI তৈরি",
+      "React Router, Context API, Hooks",
+      "Node.js ও Express দিয়ে REST API",
+      "MongoDB ও Mongoose দিয়ে Database",
+      "Firebase Authentication সেটআপ",
+      "JWT দিয়ে Secure Login System",
+      "Git ও GitHub ব্যবহার",
+      "Vercel ও Netlify তে Deploy করা",
+      "Interview Preparation ও DSA Basics",
+    ].map((text, i) => ({ category: mernCat._id, text, order: i, createdBy: adminUser._id })),
+    (i) => ({ category: i.category, text: i.text }),
+    "MERN what-you-learn items"
+  );
+
+  // -- PHP / Laravel ------------------------------------------------------
+  await upsertOne(
+    CourseWhatYouLearnSection,
+    { category: laravelCat._id },
+    {
+      category: laravelCat._id,
+      heading: "কী কী শিখবে এই কোর্সে?",
+      subtitle: "শেষ করলে তুমি একজন দক্ষ PHP/Laravel Developer হয়ে যাবে",
+    },
+    "PHP/Laravel what-you-learn section"
+  );
+  await upsertMany(
+    CourseWhatYouLearnItem,
+    [
+      "HTML5 ও CSS3 দিয়ে সুন্দর ওয়েবসাইট বানানো",
+      "Bootstrap দিয়ে Responsive Design",
+      "PHP-এর Core Concepts ও OOP",
+      "Laravel Framework ও MVC Architecture",
+      "Blade Templating Engine",
+      "Eloquent ORM দিয়ে Database কাজ",
+      "MySQL Database Design",
+      "Laravel Authentication ও Sanctum",
+      "RESTful API বানানো Laravel দিয়ে",
+      "Composer ও Package Management",
+      "Git ও GitHub ব্যবহার",
+      "Laravel App Deploy করা",
+    ].map((text, i) => ({ category: laravelCat._id, text, order: i, createdBy: adminUser._id })),
+    (i) => ({ category: i.category, text: i.text }),
+    "PHP/Laravel what-you-learn items"
+  );
+
+  // -- Networking ----------------------------------------------------------
+  await upsertOne(
+    CourseWhatYouLearnSection,
+    { category: networkingCat._id },
+    {
+      category: networkingCat._id,
+      heading: "কী কী শিখবে এই কোর্সে?",
+      subtitle: "শেষ করলে তুমি একজন দক্ষ Network Engineer হয়ে যাবে",
+    },
+    "Networking what-you-learn section"
+  );
+  await upsertMany(
+    CourseWhatYouLearnItem,
+    [
+      "Networking Fundamentals ও OSI Model",
+      "TCP/IP Protocol Suite",
+      "Cisco Packet Tracer দিয়ে Simulation",
+      "Routing ও Switching Basics",
+      "VLAN Configuration",
+      "MikroTik Router Configuration",
+      "Firewall ও Network Security",
+      "VPN Setup ও Configuration",
+      "Wireless Networking",
+      "Network Troubleshooting",
+      "IP Addressing ও Subnetting",
+      "Industry Certification Prep (CCNA)",
+    ].map((text, i) => ({ category: networkingCat._id, text, order: i, createdBy: adminUser._id })),
+    (i) => ({ category: i.category, text: i.text }),
+    "Networking what-you-learn items"
   );
 
   // ── ADD FUTURE SECTIONS HERE ──────────────────────────────────────────────

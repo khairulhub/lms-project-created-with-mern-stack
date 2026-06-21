@@ -44,6 +44,8 @@ import AdminNavMenu from "./pages/admin/AdminNavMenu";
 import AdminCourseHeroSection from "./pages/admin/AdminCourseHeroSection";
 import AdminCoursePaymentMethod from "./pages/admin/AdminCoursePaymentMethod";
 import AdminCourseHighlights from "./pages/admin/AdminCourseHighlights";
+import AdminCourseVideo from "./pages/admin/AdminCourseVideo";
+import AdminCourseWhatYouLearn from "./pages/admin/AdminCourseWhatYouLearn";
 
 function App() {
   return (
@@ -101,6 +103,8 @@ function App() {
           <Route path="/admin/course-details/hero-section" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseHeroSection /></ProtectedRoute>} />
           <Route path="/admin/course-details/payment-method" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCoursePaymentMethod /></ProtectedRoute>} />
           <Route path="/admin/course-details/highlights" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseHighlights /></ProtectedRoute>} />
+          <Route path="/admin/course-details/video" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseVideo /></ProtectedRoute>} />
+          <Route path="/admin/course-details/what-you-learn" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseWhatYouLearn /></ProtectedRoute>} />
 
           {/* ── 404 ──────────────────────────────────── */}
           <Route path="*" element={

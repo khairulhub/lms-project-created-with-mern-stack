@@ -35,7 +35,9 @@ const Category = ({ loadingCats, categories, selectedSlug, onSelect }) => {
                           >
                             <div className="text-4xl mb-3">{cat.icon}</div>
                             <div className={`font-semibold text-sm transition-colors ${isActive ? "text-cyan-400" : "text-white group-hover:text-cyan-400"}`}>{cat.name}</div>
-                            
+                            {cat.description && (
+                              <div className="text-gray-500 text-xs mt-1 line-clamp-2">{cat.description}</div>
+                            )}
                           </button>
                         );
                       })}
