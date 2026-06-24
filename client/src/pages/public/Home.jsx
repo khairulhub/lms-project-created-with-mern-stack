@@ -13,6 +13,8 @@ import Category from "./CourseDetails/Category";
 import CourseHighlightsSection from "./CourseDetails/CourseHighlightsSection";
 import CourseVideoSection from "./CourseDetails/CourseVideoSection";
 import CourseWhatYouLearnSection from "./CourseDetails/CourseWhatYouLearnSection";
+import CourseCurriculumSection from "./CourseDetails/CourseCurriculumSection";
+import CourseProjectsSection from "./CourseDetails/CourseProjectsSection";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared small components (used by the Course sections below)
@@ -80,93 +82,16 @@ const Accordion = ({ title, children, defaultOpen = false }) => {
 // ════════════════════════════════════════════════════════════════
 // COURSE SECTION 6 — CURRICULUM
 // ════════════════════════════════════════════════════════════════
-const CourseCurriculumSection = () => {
-  const modules = [
-    { week: "Week 1-2", title: "HTML & CSS Foundation", lessons: 18, duration: "6h 30m",
-      topics: ["HTML5 Semantic Elements", "CSS Box Model ও Flexbox", "CSS Grid Layout", "Responsive Design", "Tailwind CSS Basics", "Mini Project: Portfolio Page"] },
-    { week: "Week 3-5", title: "JavaScript Essentials", lessons: 24, duration: "9h 15m",
-      topics: ["Variables, Functions, Scope", "Arrays ও Objects", "DOM Manipulation", "Events ও Event Listeners", "ES6+: Arrow Functions, Destructuring", "Promises, Async/Await, Fetch API"] },
-    { week: "Week 6-9", title: "React.js Deep Dive", lessons: 30, duration: "13h 40m",
-      topics: ["React Fundamentals ও JSX", "Components, Props, State", "useState, useEffect, useContext", "React Router v6", "Form Handling", "Project: E-commerce App"] },
-    { week: "Week 10-12", title: "Backend — Node.js & Express", lessons: 22, duration: "9h 20m",
-      topics: ["Node.js Basics ও NPM", "Express Framework", "REST API Design", "Middleware", "JWT Authentication", "File Upload"] },
-    { week: "Week 13-14", title: "Database — MongoDB", lessons: 16, duration: "6h 45m",
-      topics: ["MongoDB Atlas Setup", "CRUD Operations", "Mongoose Schema", "Relationships", "Aggregation Pipeline"] },
-    { week: "Week 15-16", title: "Final Project ও Job Prep", lessons: 14, duration: "7h 00m",
-      topics: ["Full Stack MERN Project", "GitHub Portfolio", "Resume Building", "Interview Prep", "Freelancing Tips", "Job Application Guide"] },
-  ];
-
-  const totalLessons = modules.reduce((a, m) => a + m.lessons, 0);
-
-  return (
-    <section style={{ background: "#120326" }} className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-2">
-          কোর্সের সিলেবাস
-        </h2>
-        <p className="text-gray-400 text-center text-sm mb-10">
-          {totalLessons} টি লেসন · {modules.length} টি মডিউল · ১৬ সপ্তাহ
-        </p>
-        <div className="space-y-3">
-          {modules.map((m, i) => (
-            <Accordion key={i}
-              title={`${m.week} — ${m.title}  (${m.lessons} লেসন · ${m.duration})`}
-              defaultOpen={i === 0}>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {m.topics.map((topic, j) => (
-                  <div key={j} className="flex items-center gap-2.5 text-sm text-gray-300">
-                    <FiPlay size={11} className="text-purple-400 shrink-0" />
-                    {topic}
-                  </div>
-                ))}
-              </div>
-            </Accordion>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+// Imported from ./CourseDetails/CourseCurriculumSection — fetches its
+// own data from /api/course-curriculum/:categorySlug (admin-editable
+// per category from Admin → Course Details → Curriculum).
+// ════════════════════════════════════════════════════════════════
 
 // ════════════════════════════════════════════════════════════════
 // COURSE SECTION 7 — PROJECTS
 // ════════════════════════════════════════════════════════════════
-const CourseProjectsSection = () => (
-  <section style={{ background: "#0d011f" }} className="py-16 px-4">
-    <div className="max-w-6xl mx-auto">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-        বাস্তব প্রজেক্ট বানাবে
-      </h2>
-      <p className="text-gray-400 text-center text-sm mb-10">
-        শুধু থিওরি না — ৪টি real-world project যা portfolio তে রাখতে পারবে
-      </p>
-      <div className="grid sm:grid-cols-2 gap-5">
-        {[
-          { emoji: "🛒", title: "E-Commerce Platform", tech: ["React", "Node.js", "MongoDB"], desc: "পূর্ণ ফিচারযুক্ত ই-কমার্স অ্যাপ — product listing, cart, payment, admin panel" },
-          { emoji: "📚", title: "LMS Platform", tech: ["React", "Firebase", "Express"], desc: "Course management system, video player, quiz system সহ" },
-          { emoji: "💬", title: "Real-time Chat App", tech: ["Socket.io", "React", "Node"], desc: "Real-time messaging, group chat, online status" },
-          { emoji: "🏠", title: "Property Listing Site", tech: ["React", "MongoDB", "JWT"], desc: "Property search, filter, booking এবং review system" },
-        ].map(p => (
-          <div key={p.title}
-            className="rounded-2xl p-6 border border-purple-800 hover:border-purple-500 transition-all group"
-            style={{ background: "linear-gradient(135deg, #1a0533, #120326)" }}>
-            <div className="text-4xl mb-4">{p.emoji}</div>
-            <h3 className="text-white font-bold text-base mb-2 group-hover:text-purple-300 transition-colors">{p.title}</h3>
-            <p className="text-gray-400 text-sm mb-4 leading-relaxed">{p.desc}</p>
-            <div className="flex flex-wrap gap-2">
-              {p.tech.map(t => (
-                <span key={t} className="text-purple-300 text-xs px-2.5 py-1 rounded-full border border-purple-700"
-                  style={{ background: "rgba(124,58,237,0.15)" }}>
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-);
+// Imported from ./CourseDetails/CourseProjectsSection
+// Shows latest 4 active. Grid or Slider layout from Admin panel.
 
 // ════════════════════════════════════════════════════════════════
 // COURSE SECTION 8 — SUPPORT
@@ -427,7 +352,7 @@ const Home = () => {
       <CourseHighlightsSection categorySlug={selectedCategorySlug} />
       <CourseVideoSection categorySlug={selectedCategorySlug} />
       <CourseWhatYouLearnSection categorySlug={selectedCategorySlug} />
-      <CourseCurriculumSection />
+      <CourseCurriculumSection categorySlug={selectedCategorySlug} />
       <CourseProjectsSection />
       <CourseSupportSection />
       <CourseCareerSection />

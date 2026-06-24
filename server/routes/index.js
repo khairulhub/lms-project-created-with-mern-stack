@@ -34,6 +34,24 @@ const {
 } = require("../controllers/courseWhatYouLearnController");
 const { uploadVideo } = require("../config/upload");
 
+const {
+  getCurriculum, getAdminCurriculum, updateCurriculumSection,
+  createCurriculumModule, updateCurriculumModule, deleteCurriculumModule,
+} = require("../controllers/courseCurriculumController");
+
+const {
+  getCourseProjects,
+  getAdminProjectSettings, updateProjectSettings,
+  getAdminProjects, createProject, updateProject, deleteProject,
+} = require("../controllers/courseProjectController");
+
+
+
+
+
+
+
+
 // ─── AUTH ────────────────────────────────────────────────────────────────────
 router.post("/auth/firebase-sync", verifyFirebaseToken, firebaseSync);
 router.get("/auth/me", protect, getMe);
@@ -136,5 +154,30 @@ router.put("/admin/course-what-you-learn/:categoryId/section", protect, adminOnl
 router.post("/admin/course-what-you-learn/:categoryId/items", protect, adminOnly, createWhatYouLearnItem);
 router.put("/admin/course-what-you-learn/items/:id", protect, adminOnly, updateWhatYouLearnItem);
 router.delete("/admin/course-what-you-learn/items/:id", protect, adminOnly, deleteWhatYouLearnItem);
+
+
+
+// ─── COURSE DETAILS → CURRICULUM SECTION (per-category, admin-editable) ──────
+router.get("/course-curriculum/:categorySlug", getCurriculum);                                              // public
+ 
+router.get("/admin/course-curriculum/:categoryId", protect, adminOnly, getAdminCurriculum);
+router.put("/admin/course-curriculum/:categoryId/section", protect, adminOnly, updateCurriculumSection);
+router.post("/admin/course-curriculum/:categoryId/modules", protect, adminOnly, createCurriculumModule);
+router.put("/admin/course-curriculum/modules/:id", protect, adminOnly, updateCurriculumModule);
+router.delete("/admin/course-curriculum/modules/:id", protect, adminOnly, deleteCurriculumModule);
+
+// ─── COURSE DETAILS → PROJECTS SECTION (global, not per-category) ─────────────
+router.get("/course-projects", getCourseProjects);                                          // public
+
+router.get("/admin/course-projects/settings", protect, adminOnly, getAdminProjectSettings);
+router.put("/admin/course-projects/settings", protect, adminOnly, updateProjectSettings);
+router.get("/admin/course-projects", protect, adminOnly, getAdminProjects);
+router.post("/admin/course-projects", protect, adminOnly, createProject);
+router.put("/admin/course-projects/:id", protect, adminOnly, updateProject);
+router.delete("/admin/course-projects/:id", protect, adminOnly, deleteProject);
+
+
+
+
 
 module.exports = router;

@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 import PublicLayout from "../../components/layout/PublicLayout";
 import CourseHeroSection from "./CourseDetails/CourseHeroSection";
 import CoursePaymentSection from "./CourseDetails/CoursePaymentSection";
+import CourseHighlightsSection from "./CourseDetails/CourseHighlightsSection";
+import CourseVideoSection from "./CourseDetails/CourseVideoSection";
+import CourseWhatYouLearnSection from "./CourseDetails/CourseWhatYouLearnSection";
+import CourseCurriculumSection from "./CourseDetails/CourseCurriculumSection";
 import {
   FiCheck, FiChevronDown, FiChevronUp, FiStar,
   FiPlay, FiThumbsUp,
@@ -57,168 +61,9 @@ const Accordion = ({ title, children, defaultOpen = false }) => {
 // admin-editable from Admin → Course Details → Payment Method)
 // ════════════════════════════════════════════════════════════════
 
-// ════════════════════════════════════════════════════════════════
-// SECTION 3 — HIGHLIGHTS
-// ════════════════════════════════════════════════════════════════
-const HighlightsSection = () => (
-  <section style={{ background: "#0d011f" }} className="py-16 px-4">
-    <div className="max-w-6xl mx-auto">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-        এই কোর্সে তুমি কী পাবে?
-      </h2>
-      <p className="text-gray-400 text-center text-sm mb-10">
-        একটাই কোর্সে সবকিছু — শেখা, প্র্যাকটিস, প্রজেক্ট এবং ক্যারিয়ার সাপোর্ট
-      </p>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {[
-          { emoji: "🤖", title: "AI-Powered Learning", desc: "AI tools দিয়ে faster এবং smarter ভাবে কোড শেখো" },
-          { emoji: "📋", title: "Structured Path", desc: "Week-by-week structured curriculum তোমাকে গাইড করবে" },
-          { emoji: "🌐", title: "Full Stack Skills", desc: "Frontend থেকে Backend — সব কিছু এক জায়গায়" },
-          { emoji: "💼", title: "Job Ready", desc: "ইন্টারভিউ প্রেপ, CV রিভিউ এবং জব সাপোর্ট" },
-        ].map(item => (
-          <div key={item.title}
-            className="rounded-2xl p-5 border border-purple-800 hover:border-purple-500 transition-all group"
-            style={{ background: "linear-gradient(135deg, #1a0533, #120326)" }}>
-            <div className="text-4xl mb-3">{item.emoji}</div>
-            <h3 className="text-white font-bold text-sm mb-2 group-hover:text-purple-300 transition-colors">{item.title}</h3>
-            <p className="text-gray-400 text-xs leading-relaxed">{item.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Tech tags */}
-      <div className="text-center">
-        <p className="text-gray-500 text-xs mb-4">যা যা শিখবে:</p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {["HTML", "CSS", "Tailwind", "JavaScript", "React", "Node.js", "Express", "MongoDB", "Firebase", "Git", "REST API", "JWT"].map(t => (
-            <span key={t} className="border border-purple-800 text-purple-200 text-xs font-medium px-3 py-1.5 rounded-full"
-              style={{ background: "#1a0533" }}>
-              {t}
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
-// ════════════════════════════════════════════════════════════════
-// SECTION 4 — VIDEO
-// ════════════════════════════════════════════════════════════════
-const VideoSection = () => (
-  <section style={{ background: "#120326" }} className="py-16 px-4">
-    <div className="max-w-4xl mx-auto">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-        কোর্সের একটু আভাস নাও
-      </h2>
-      <p className="text-gray-400 text-center text-sm mb-8">ফ্রি প্রিভিউতে দেখো আমরা কীভাবে পড়াই</p>
-      <div className="relative w-full rounded-2xl overflow-hidden border border-purple-800" style={{ aspectRatio: "16/9", background: "#0d011f" }}>
-        <iframe
-          src="https://www.youtube.com/embed/zAbT_zvSaM4"
-          title="Course Preview"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="absolute inset-0 w-full h-full"
-        />
-      </div>
-    </div>
-  </section>
-);
-
-// ════════════════════════════════════════════════════════════════
-// SECTION 5 — WHAT YOU'LL LEARN
-// ════════════════════════════════════════════════════════════════
-const WhatYouLearnSection = () => (
-  <section style={{ background: "#0d011f" }} className="py-16 px-4">
-    <div className="max-w-6xl mx-auto">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-        কী কী শিখবে এই কোর্সে?
-      </h2>
-      <p className="text-gray-400 text-center text-sm mb-10">
-        শেষ করলে তুমি একজন দক্ষ Full Stack Developer হয়ে যাবে
-      </p>
-      <div className="rounded-2xl border border-purple-800 p-8"
-        style={{ background: "linear-gradient(135deg, #1a0533, #120326)" }}>
-        <div className="grid sm:grid-cols-2 gap-4">
-          {[
-            "HTML5 ও CSS3 দিয়ে সুন্দর ওয়েবসাইট বানানো",
-            "Tailwind CSS দিয়ে Responsive Design",
-            "JavaScript ES6+ এর সব আধুনিক ফিচার",
-            "React.js দিয়ে Dynamic UI তৈরি",
-            "React Router, Context API, Hooks",
-            "Node.js ও Express দিয়ে REST API",
-            "MongoDB ও Mongoose দিয়ে Database",
-            "Firebase Authentication সেটআপ",
-            "JWT দিয়ে Secure Login System",
-            "Git ও GitHub ব্যবহার",
-            "Vercel ও Netlify তে Deploy করা",
-            "Interview Preparation ও DSA Basics",
-          ].map((t, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.4)" }}>
-                <FiCheck size={11} className="text-green-400" />
-              </div>
-              <span className="text-gray-300 text-sm leading-relaxed">{t}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
-// ════════════════════════════════════════════════════════════════
-// SECTION 6 — CURRICULUM
-// ════════════════════════════════════════════════════════════════
-const CurriculumSection = () => {
-  const modules = [
-    { week: "Week 1-2", title: "HTML & CSS Foundation", lessons: 18, duration: "6h 30m",
-      topics: ["HTML5 Semantic Elements", "CSS Box Model ও Flexbox", "CSS Grid Layout", "Responsive Design", "Tailwind CSS Basics", "Mini Project: Portfolio Page"] },
-    { week: "Week 3-5", title: "JavaScript Essentials", lessons: 24, duration: "9h 15m",
-      topics: ["Variables, Functions, Scope", "Arrays ও Objects", "DOM Manipulation", "Events ও Event Listeners", "ES6+: Arrow Functions, Destructuring", "Promises, Async/Await, Fetch API"] },
-    { week: "Week 6-9", title: "React.js Deep Dive", lessons: 30, duration: "13h 40m",
-      topics: ["React Fundamentals ও JSX", "Components, Props, State", "useState, useEffect, useContext", "React Router v6", "Form Handling", "Project: E-commerce App"] },
-    { week: "Week 10-12", title: "Backend — Node.js & Express", lessons: 22, duration: "9h 20m",
-      topics: ["Node.js Basics ও NPM", "Express Framework", "REST API Design", "Middleware", "JWT Authentication", "File Upload"] },
-    { week: "Week 13-14", title: "Database — MongoDB", lessons: 16, duration: "6h 45m",
-      topics: ["MongoDB Atlas Setup", "CRUD Operations", "Mongoose Schema", "Relationships", "Aggregation Pipeline"] },
-    { week: "Week 15-16", title: "Final Project ও Job Prep", lessons: 14, duration: "7h 00m",
-      topics: ["Full Stack MERN Project", "GitHub Portfolio", "Resume Building", "Interview Prep", "Freelancing Tips", "Job Application Guide"] },
-  ];
-
-  const totalLessons = modules.reduce((a, m) => a + m.lessons, 0);
-
-  return (
-    <section style={{ background: "#120326" }} className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-2">
-          কোর্সের সিলেবাস
-        </h2>
-        <p className="text-gray-400 text-center text-sm mb-10">
-          {totalLessons} টি লেসন · {modules.length} টি মডিউল · ১৬ সপ্তাহ
-        </p>
-        <div className="space-y-3">
-          {modules.map((m, i) => (
-            <Accordion key={i}
-              title={`${m.week} — ${m.title}  (${m.lessons} লেসন · ${m.duration})`}
-              defaultOpen={i === 0}>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {m.topics.map((topic, j) => (
-                  <div key={j} className="flex items-center gap-2.5 text-sm text-gray-300">
-                    <FiPlay size={11} className="text-purple-400 shrink-0" />
-                    {topic}
-                  </div>
-                ))}
-              </div>
-            </Accordion>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+// SECTIONS 3-6 are now imported DB-driven components:
+// CourseHighlightsSection, CourseVideoSection, CourseWhatYouLearnSection, CourseCurriculumSection
+// (imported at top of file — each fetches its own data per categorySlug)
 
 // ════════════════════════════════════════════════════════════════
 // SECTION 7 — PROJECTS
@@ -483,14 +328,19 @@ const CTASection = () => (
 // ════════════════════════════════════════════════════════════════
 // MAIN EXPORT
 // ════════════════════════════════════════════════════════════════
-const CourseDetails = () => (
+const CourseDetails = () => {
+  // categorySlug drives which data each DB-connected section shows.
+  // null = fallback defaults until a category is selected.
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState(null);
+
+  return (
   <PublicLayout>
     <CourseHeroSection />
     <CoursePaymentSection />
-    <HighlightsSection />
-    <VideoSection />
-    <WhatYouLearnSection />
-    <CurriculumSection />
+    <CourseHighlightsSection categorySlug={selectedCategorySlug} />
+    <CourseVideoSection categorySlug={selectedCategorySlug} />
+    <CourseWhatYouLearnSection categorySlug={selectedCategorySlug} />
+    <CourseCurriculumSection categorySlug={selectedCategorySlug} />
     <ProjectsSection />
     <SupportSection />
     <CareerSection />
@@ -498,6 +348,7 @@ const CourseDetails = () => (
     <FAQSection />
     <CTASection />
   </PublicLayout>
-);
+  );
+};
 
 export default CourseDetails;

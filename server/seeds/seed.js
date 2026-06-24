@@ -12,6 +12,10 @@ const CourseHighlightItem = require("../models/CourseHighlightItem");
 const CourseVideoSection = require("../models/CourseVideoSection");
 const CourseWhatYouLearnSection = require("../models/CourseWhatYouLearnSection");
 const CourseWhatYouLearnItem = require("../models/CourseWhatYouLearnItem");
+const CourseCurriculumSection = require("../models/CourseCurriculumSection");
+const CourseCurriculumModule  = require("../models/CourseCurriculumModule");
+const CourseProject           = require("../models/CourseProject");
+const CourseProjectSettings   = require("../models/CourseProjectSettings");
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 // Upsert one document by a unique key, without touching it if it already exists.
@@ -545,7 +549,223 @@ const seedDatabase = async () => {
     "Networking what-you-learn items"
   );
 
+  // ── COURSE DETAILS → CURRICULUM SECTION (per category) ─────────────────────
+  console.log("📖 Course Curriculum (per category)");
+
+  // -- MERN Stack --------------------------------------------------------
+  await upsertOne(
+    CourseCurriculumSection,
+    { category: mernCat._id },
+    {
+      category: mernCat._id,
+      heading:  "কোর্সের সিলেবাস",
+      subtitle: "সম্পূর্ণ কোর্স কারিকুলাম একনজরে দেখো",
+    },
+    "MERN curriculum section"
+  );
+  await upsertMany(
+    CourseCurriculumModule,
+    [
+      {
+        category: mernCat._id, week: "Week 1-2", title: "HTML & CSS Foundation",
+        lessons: 18, duration: "6h 30m", order: 0, isActive: true,
+        topics: ["HTML5 Semantic Elements", "CSS Box Model ও Flexbox", "CSS Grid Layout", "Responsive Design", "Tailwind CSS Basics", "Mini Project: Portfolio Page"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: mernCat._id, week: "Week 3-5", title: "JavaScript Essentials",
+        lessons: 24, duration: "9h 15m", order: 1, isActive: true,
+        topics: ["Variables, Functions, Scope", "Arrays ও Objects", "DOM Manipulation", "Events ও Event Listeners", "ES6+: Arrow Functions, Destructuring", "Promises, Async/Await, Fetch API"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: mernCat._id, week: "Week 6-9", title: "React.js Deep Dive",
+        lessons: 30, duration: "13h 40m", order: 2, isActive: true,
+        topics: ["React Fundamentals ও JSX", "Components, Props, State", "useState, useEffect, useContext", "React Router v6", "Form Handling", "Project: E-commerce App"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: mernCat._id, week: "Week 10-12", title: "Backend — Node.js & Express",
+        lessons: 22, duration: "9h 20m", order: 3, isActive: true,
+        topics: ["Node.js Basics ও NPM", "Express Framework", "REST API Design", "Middleware", "JWT Authentication", "File Upload"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: mernCat._id, week: "Week 13-14", title: "Database — MongoDB",
+        lessons: 16, duration: "6h 45m", order: 4, isActive: true,
+        topics: ["MongoDB Atlas Setup", "CRUD Operations", "Mongoose Schema", "Relationships", "Aggregation Pipeline"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: mernCat._id, week: "Week 15-16", title: "Final Project ও Job Prep",
+        lessons: 14, duration: "7h 00m", order: 5, isActive: true,
+        topics: ["Full Stack MERN Project", "GitHub Portfolio", "Resume Building", "Interview Prep", "Freelancing Tips", "Job Application Guide"],
+        createdBy: adminUser._id,
+      },
+    ],
+    (m) => ({ category: m.category, week: m.week, title: m.title }),
+    "MERN curriculum modules"
+  );
+
+  // -- PHP / Laravel --------------------------------------------------------
+  await upsertOne(
+    CourseCurriculumSection,
+    { category: laravelCat._id },
+    {
+      category: laravelCat._id,
+      heading:  "কোর্সের সিলেবাস",
+      subtitle: "সম্পূর্ণ কোর্স কারিকুলাম একনজরে দেখো",
+    },
+    "PHP/Laravel curriculum section"
+  );
+  await upsertMany(
+    CourseCurriculumModule,
+    [
+      {
+        category: laravelCat._id, week: "Week 1-2", title: "HTML, CSS ও Bootstrap",
+        lessons: 16, duration: "6h 00m", order: 0, isActive: true,
+        topics: ["HTML5 Basics", "CSS Fundamentals", "Bootstrap Grid", "Responsive Design", "Mini Project: Landing Page"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: laravelCat._id, week: "Week 3-5", title: "PHP Core ও OOP",
+        lessons: 22, duration: "9h 00m", order: 1, isActive: true,
+        topics: ["PHP Variables ও Data Types", "Functions ও Arrays", "OOP: Class, Object, Inheritance", "Error Handling", "File Handling"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: laravelCat._id, week: "Week 6-9", title: "Laravel Framework",
+        lessons: 28, duration: "12h 30m", order: 2, isActive: true,
+        topics: ["Laravel Installation ও MVC", "Routing ও Controllers", "Blade Templating", "Eloquent ORM", "Form Validation", "Middleware"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: laravelCat._id, week: "Week 10-12", title: "Database — MySQL",
+        lessons: 18, duration: "7h 30m", order: 3, isActive: true,
+        topics: ["MySQL Setup", "CRUD with Eloquent", "Migrations ও Seeders", "Relationships (HasMany, BelongsTo)", "Query Builder"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: laravelCat._id, week: "Week 13-14", title: "Authentication ও API",
+        lessons: 16, duration: "6h 30m", order: 4, isActive: true,
+        topics: ["Laravel Breeze / Sanctum", "API Routes", "Token-based Auth", "CORS Configuration", "Postman Testing"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: laravelCat._id, week: "Week 15-16", title: "Final Project ও Deploy",
+        lessons: 12, duration: "6h 00m", order: 5, isActive: true,
+        topics: ["Full Laravel Project", "Shared Hosting Deploy", "cPanel Setup", "GitHub Portfolio", "Job Application Guide"],
+        createdBy: adminUser._id,
+      },
+    ],
+    (m) => ({ category: m.category, week: m.week, title: m.title }),
+    "PHP/Laravel curriculum modules"
+  );
+
+  // -- Networking ----------------------------------------------------------
+  await upsertOne(
+    CourseCurriculumSection,
+    { category: networkingCat._id },
+    {
+      category: networkingCat._id,
+      heading:  "কোর্সের সিলেবাস",
+      subtitle: "সম্পূর্ণ কোর্স কারিকুলাম একনজরে দেখো",
+    },
+    "Networking curriculum section"
+  );
+  await upsertMany(
+    CourseCurriculumModule,
+    [
+      {
+        category: networkingCat._id, week: "Week 1-2", title: "Networking Fundamentals",
+        lessons: 14, duration: "5h 30m", order: 0, isActive: true,
+        topics: ["OSI Model ও TCP/IP", "IP Addressing", "Subnetting Basics", "Network Devices", "LAN vs WAN"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: networkingCat._id, week: "Week 3-5", title: "Cisco Packet Tracer",
+        lessons: 20, duration: "8h 00m", order: 1, isActive: true,
+        topics: ["Packet Tracer Install", "Router Configuration", "Switch Configuration", "VLAN Setup", "Static Routing", "RIP ও OSPF"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: networkingCat._id, week: "Week 6-8", title: "MikroTik Router",
+        lessons: 18, duration: "7h 30m", order: 2, isActive: true,
+        topics: ["MikroTik Winbox", "IP Configuration", "DHCP Server", "Firewall Rules", "Bandwidth Management", "Hotspot Setup"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: networkingCat._id, week: "Week 9-11", title: "Network Security",
+        lessons: 16, duration: "6h 30m", order: 3, isActive: true,
+        topics: ["Firewall Concepts", "VPN Types ও Setup", "Network Threats", "IDS/IPS Basics", "Wireless Security", "ACL Configuration"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: networkingCat._id, week: "Week 12-14", title: "Advanced Topics ও Labs",
+        lessons: 14, duration: "6h 00m", order: 4, isActive: true,
+        topics: ["Network Troubleshooting", "Wireless Networking", "Network Monitoring", "Real Lab Practice", "Case Studies"],
+        createdBy: adminUser._id,
+      },
+      {
+        category: networkingCat._id, week: "Week 15-16", title: "Certification Prep ও Job",
+        lessons: 10, duration: "5h 00m", order: 5, isActive: true,
+        topics: ["CCNA Exam Prep", "Practice Questions", "Resume Building", "LinkedIn Profile", "Job Application Guide"],
+        createdBy: adminUser._id,
+      },
+    ],
+    (m) => ({ category: m.category, week: m.week, title: m.title }),
+    "Networking curriculum modules"
+  );
+
   // ── ADD FUTURE SECTIONS HERE ──────────────────────────────────────────────
+
+  // ── COURSE DETAILS → PROJECTS SECTION (global, not per-category) ─────────
+  console.log("🛠️  Course Projects");
+
+  // Singleton settings
+  let projectSettings = await CourseProjectSettings.findOne();
+  if (!projectSettings) {
+    await CourseProjectSettings.create({
+      heading:      "বাস্তব প্রজেক্ট বানাবে",
+      subtitle:     "শুধু থিওরি না — real-world project যা portfolio তে রাখতে পারবে",
+      displayStyle: "grid",
+    });
+    console.log("  ✅ CourseProjectSettings created");
+  } else {
+    console.log("  ⏭️  CourseProjectSettings already exists");
+  }
+
+  await upsertMany(
+    CourseProject,
+    [
+      {
+        emoji: "🛒", title: "E-Commerce Platform", order: 0, isActive: true,
+        description: "পূর্ণ ফিচারযুক্ত ই-কমার্স অ্যাপ — product listing, cart, payment, admin panel",
+        techTags: ["React", "Node.js", "MongoDB"],
+        createdBy: adminUser._id,
+      },
+      {
+        emoji: "📚", title: "LMS Platform", order: 1, isActive: true,
+        description: "Course management system, video player, quiz system সহ",
+        techTags: ["React", "Firebase", "Express"],
+        createdBy: adminUser._id,
+      },
+      {
+        emoji: "💬", title: "Real-time Chat App", order: 2, isActive: true,
+        description: "Real-time messaging, group chat, online status",
+        techTags: ["Socket.io", "React", "Node"],
+        createdBy: adminUser._id,
+      },
+      {
+        emoji: "🏠", title: "Property Listing Site", order: 3, isActive: true,
+        description: "Property search, filter, booking এবং review system",
+        techTags: ["React", "MongoDB", "JWT"],
+        createdBy: adminUser._id,
+      },
+    ],
+    (p) => ({ title: p.title }),
+    "CourseProjects"
+  );
   // Just copy one of the patterns above:
   //   - upsertMany(Model, [...items], (item) => ({ uniqueField: item.uniqueField }), "label")
   //   - upsertOne(Model, { someFilter }, data, "label")
