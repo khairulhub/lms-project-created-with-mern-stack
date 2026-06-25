@@ -39,6 +39,8 @@ const DashboardLayout = ({ children }) => {
         { to: "/admin/course-details/what-you-learn", label: "What You'll Learn" },
         { to: "/admin/course-details/curriculum", label: "Curriculum Section" },
         { to: "/admin/course-details/projects", label: "Projects Section" },
+        { to: "/admin/course-details/career", label: "Career Section" },
+        { to: "/admin/course-details/reviews", label: "Reviews Section" },
       ],
     },
     { to: "/admin/navbar", icon: <FiGlobe />, label: "Navbar Settings" },

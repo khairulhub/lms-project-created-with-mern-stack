@@ -15,6 +15,8 @@ import CourseVideoSection from "./CourseDetails/CourseVideoSection";
 import CourseWhatYouLearnSection from "./CourseDetails/CourseWhatYouLearnSection";
 import CourseCurriculumSection from "./CourseDetails/CourseCurriculumSection";
 import CourseProjectsSection from "./CourseDetails/CourseProjectsSection";
+import CourseCareerSection from "./CourseDetails/CourseCareerSection";
+import CourseReviewsSection from "./CourseDetails/CourseReviewsSection";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared small components (used by the Course sections below)
@@ -127,125 +129,15 @@ const CourseSupportSection = () => (
 // ════════════════════════════════════════════════════════════════
 // COURSE SECTION 9 — CAREER
 // ════════════════════════════════════════════════════════════════
-const CourseCareerSection = () => (
-  <section style={{ background: "#0d011f" }} className="py-16 px-4">
-    <div className="max-w-6xl mx-auto">
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-white mb-4">
-            কোর্স শেষে তোমার ক্যারিয়ার 🚀
-          </h2>
-          <p className="text-gray-400 text-sm mb-6 leading-relaxed">
-            আমাদের ৫০০+ গ্র্যাজুয়েট দেশে এবং বিদেশে সফলভাবে কাজ করছে।
-            চাকরি, ফ্রিল্যান্সিং বা নিজের স্টার্টআপ — যেকোনো পথে প্রস্তুত করব।
-          </p>
-          <div className="space-y-3">
-            {[
-              "🏢 Top Tech Company তে জব পাওয়ার সুযোগ",
-              "💻 Upwork, Fiverr এ Freelancing শুরু",
-              "📁 শক্তিশালী GitHub Portfolio তৈরি",
-              "📝 Professional CV ও LinkedIn Profile",
-              "🎤 Mock Interview ও Job Referral সাপোর্ট",
-            ].map((item, i) => (
-              <p key={i} className="text-gray-300 text-sm">{item}</p>
-            ))}
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { value: "৫০০+", label: "সফল গ্র্যাজুয়েট", from: "#7c3aed", to: "#6d28d9" },
-            { value: "৮৫%", label: "জব পেয়েছে", from: "#db2777", to: "#be185d" },
-            { value: "৩x", label: "স্যালারি বৃদ্ধি", from: "#4f46e5", to: "#4338ca" },
-            { value: "৬০+", label: "হায়ারিং পার্টনার", from: "#0891b2", to: "#0e7490" },
-          ].map(s => (
-            <div key={s.label}
-              className="rounded-2xl p-6 text-center"
-              style={{ background: `linear-gradient(135deg, ${s.from}, ${s.to})` }}>
-              <div className="text-3xl font-extrabold text-white mb-1">{s.value}</div>
-              <div className="text-white text-xs opacity-80">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </section>
-);
+// Imported from ./CourseDetails/CourseCareerSection
+// Shows latest 3 active bullets + all active stats. Split or Cards
+// layout toggled from Admin → Course Details → Career.
 
 // ════════════════════════════════════════════════════════════════
 // COURSE SECTION 10 — REVIEWS
 // ════════════════════════════════════════════════════════════════
-const CourseReviewsSection = () => {
-  const reviews = [
-    { name: "রাহিম উদ্দিন", role: "Junior Developer @ TechCorp", seed: "rahim", rating: 5,
-      text: "এই কোর্সটা আমার জীবন বদলে দিয়েছে। ৬ মাসে জব পেয়েছি। Jhankar ভাই এত ভালো পড়ান যে কঠিন বিষয়ও সহজ মনে হয়!" },
-    { name: "ফাতেমা খাতুন", role: "Freelancer @ Upwork", seed: "fatema", rating: 5,
-      text: "আমি গৃহিণী ছিলাম, কোডিং জানতাম না। এখন মাসে ৫০k+ ইনকাম করি। এই কোর্স সত্যিকারের জীবন পরিবর্তন করে।" },
-    { name: "করিম হোসেন", role: "Full Stack Dev @ StartupBD", seed: "karim", rating: 5,
-      text: "Projects গুলো এত real-world যে job interview তে সরাসরি কাজে লেগেছে। Community support অসাধারণ!" },
-    { name: "নাফিসা আক্তার", role: "React Developer @ RemoteJob", seed: "nafisa", rating: 5,
-      text: "বিদেশ থেকে remote job পেয়েছি এই কোর্সের পরে। Mentor support ছাড়া এত দূর আসতে পারতাম না।" },
-    { name: "সজীব আহমেদ", role: "Software Engineer @ BJIT", seed: "sajib", rating: 4,
-      text: "Curriculum অনেক comprehensive। Node.js ও React একসাথে শিখতে পেরেছি যা অনেক জায়গায় আলাদা করে শেখায়।" },
-    { name: "মারিয়া বেগম", role: "Frontend Dev @ Agency", seed: "maria", rating: 5,
-      text: "মেয়ে হিসেবে tech এ আসতে ভয় ছিল। এই community আমাকে confident করেছে। ধন্যবাদ Programming Hero!" },
-  ];
-
-  return (
-    <section style={{ background: "#120326" }} className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-          শিক্ষার্থীরা কী বলছে?
-        </h2>
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <Stars rating={4.8} large />
-          <span className="text-yellow-400 font-bold text-xl">৪.৮</span>
-          <span className="text-gray-400 text-sm">(১২,৪৮০ রিভিউ)</span>
-        </div>
-
-        {/* Rating bars */}
-        <div className="max-w-sm mx-auto mb-10">
-          {[
-            { star: 5, pct: 78 },
-            { star: 4, pct: 15 },
-            { star: 3, pct: 5 },
-            { star: 2, pct: 1 },
-            { star: 1, pct: 1 },
-          ].map(r => (
-            <div key={r.star} className="flex items-center gap-3 text-xs mb-2">
-              <span className="text-gray-400 w-3">{r.star}</span>
-              <FiStar size={11} className="text-yellow-400" style={{ fill: "#facc15" }} />
-              <div className="flex-1 rounded-full h-2" style={{ background: "#1a0533" }}>
-                <div className="h-2 rounded-full" style={{ width: `${r.pct}%`, background: "#facc15" }} />
-              </div>
-              <span className="text-gray-500 w-6">{r.pct}%</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {reviews.map((r, i) => (
-            <div key={i} className="rounded-2xl p-5 border border-purple-800"
-              style={{ background: "linear-gradient(135deg, #1a0533, #0d011f)" }}>
-              <div className="flex items-start gap-3 mb-3">
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${r.seed}`}
-                  className="w-10 h-10 rounded-full shrink-0" style={{ background: "#2d0a5e" }} alt={r.name} />
-                <div>
-                  <p className="text-white font-semibold text-sm">{r.name}</p>
-                  <p className="text-purple-400 text-xs">{r.role}</p>
-                </div>
-              </div>
-              <Stars rating={r.rating} />
-              <p className="text-gray-300 text-sm mt-3 leading-relaxed">"{r.text}"</p>
-              <button className="flex items-center gap-1.5 text-gray-600 hover:text-gray-400 text-xs mt-4 transition-colors">
-                <FiThumbsUp size={11} /> Helpful
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+// Imported from ./CourseDetails/CourseReviewsSection
+// Grid Slider or Side Slider — toggled from Admin → Course Details → Reviews.
 
 // ════════════════════════════════════════════════════════════════
 // COURSE SECTION 11 — FAQ

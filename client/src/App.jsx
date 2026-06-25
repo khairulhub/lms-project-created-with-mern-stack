@@ -48,6 +48,8 @@ import AdminCourseVideo from "./pages/admin/AdminCourseVideo";
 import AdminCourseWhatYouLearn from "./pages/admin/AdminCourseWhatYouLearn";
 import AdminCourseCurriculum from "./pages/admin/AdminCourseCurriculum";
 import AdminCourseProjects from "./pages/admin/AdminCourseProjects";
+import AdminCourseCareer from "./pages/admin/AdminCourseCareer";
+import AdminCourseReviews from "./pages/admin/AdminCourseReviews";
 
 
 function App() {
@@ -108,6 +110,8 @@ function App() {
           <Route path="/admin/course-details/highlights" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseHighlights /></ProtectedRoute>} />
           <Route path="/admin/course-details/curriculum" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseCurriculum /></ProtectedRoute>} />
           <Route path="/admin/course-details/projects" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseProjects /></ProtectedRoute>} />
+          <Route path="/admin/course-details/career" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseCareer /></ProtectedRoute>} />
+          <Route path="/admin/course-details/reviews" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseReviews /></ProtectedRoute>} />
           
           <Route path="/admin/course-details/video" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseVideo /></ProtectedRoute>} />
           <Route path="/admin/course-details/what-you-learn" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseWhatYouLearn /></ProtectedRoute>} />

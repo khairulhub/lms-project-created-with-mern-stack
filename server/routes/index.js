@@ -45,6 +45,18 @@ const {
   getAdminProjects, createProject, updateProject, deleteProject,
 } = require("../controllers/courseProjectController");
 
+const {
+  getCourseCareer,
+  getAdminCareerSettings, updateCareerSettings,
+  getAdminCareerItems, createCareerItem, updateCareerItem, deleteCareerItem,
+} = require("../controllers/courseCareerController");
+
+const {
+  getCourseReviews,
+  getAdminReviewSettings, updateReviewSettings,
+  getAdminReviews, createReview, updateReview, deleteReview,
+} = require("../controllers/courseReviewController");
+
 
 
 
@@ -175,6 +187,26 @@ router.get("/admin/course-projects", protect, adminOnly, getAdminProjects);
 router.post("/admin/course-projects", protect, adminOnly, createProject);
 router.put("/admin/course-projects/:id", protect, adminOnly, updateProject);
 router.delete("/admin/course-projects/:id", protect, adminOnly, deleteProject);
+
+// ─── COURSE DETAILS → CAREER SECTION ─────────────────────────────────────────
+router.get("/course-career", getCourseCareer);                                              // public
+
+router.get("/admin/course-career/settings", protect, adminOnly, getAdminCareerSettings);
+router.put("/admin/course-career/settings", protect, adminOnly, updateCareerSettings);
+router.get("/admin/course-career", protect, adminOnly, getAdminCareerItems);
+router.post("/admin/course-career", protect, adminOnly, createCareerItem);
+router.put("/admin/course-career/:id", protect, adminOnly, updateCareerItem);
+router.delete("/admin/course-career/:id", protect, adminOnly, deleteCareerItem);
+
+// ─── COURSE DETAILS → REVIEWS SECTION ────────────────────────────────────────
+router.get("/course-reviews", getCourseReviews);                                            // public
+
+router.get("/admin/course-reviews/settings", protect, adminOnly, getAdminReviewSettings);
+router.put("/admin/course-reviews/settings", protect, adminOnly, updateReviewSettings);
+router.get("/admin/course-reviews", protect, adminOnly, getAdminReviews);
+router.post("/admin/course-reviews", protect, adminOnly, createReview);
+router.put("/admin/course-reviews/:id", protect, adminOnly, updateReview);
+router.delete("/admin/course-reviews/:id", protect, adminOnly, deleteReview);
 
 
 

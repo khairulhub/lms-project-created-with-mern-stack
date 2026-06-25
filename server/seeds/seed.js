@@ -16,6 +16,10 @@ const CourseCurriculumSection = require("../models/CourseCurriculumSection");
 const CourseCurriculumModule  = require("../models/CourseCurriculumModule");
 const CourseProject           = require("../models/CourseProject");
 const CourseProjectSettings   = require("../models/CourseProjectSettings");
+const CourseCareerItem        = require("../models/CourseCareerItem");
+const CourseCareerSettings    = require("../models/CourseCareerSettings");
+const CourseReview            = require("../models/CourseReview");
+const CourseReviewSettings    = require("../models/CourseReviewSettings");
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 // Upsert one document by a unique key, without touching it if it already exists.
@@ -715,6 +719,79 @@ const seedDatabase = async () => {
     ],
     (m) => ({ category: m.category, week: m.week, title: m.title }),
     "Networking curriculum modules"
+  );
+
+  // ── COURSE DETAILS → CAREER SECTION ─────────────────────────────────────────
+  console.log("🎯 Course Career Section");
+
+  let careerSettings = await CourseCareerSettings.findOne();
+  if (!careerSettings) {
+    await CourseCareerSettings.create({
+      heading:      "কোর্স শেষে তোমার ক্যারিয়ার 🚀",
+      subtitle:     "আমাদের ৫০০+ গ্র্যাজুয়েট দেশে এবং বিদেশে সফলভাবে কাজ করছে। চাকরি, ফ্রিল্যান্সিং বা নিজের স্টার্টআপ — যেকোনো পথে প্রস্তুত করব।",
+      displayStyle: "split",
+    });
+    console.log("  ✅ CourseCareerSettings created");
+  } else {
+    console.log("  ⏭️  CourseCareerSettings already exists");
+  }
+
+  // Bullet items (left side list) — latest 3 active shown on frontend
+  await upsertMany(
+    CourseCareerItem,
+    [
+      { type: "bullet", icon: "🏢", text: "Top Tech Company তে জব পাওয়ার সুযোগ",    isActive: true, order: 0, createdBy: adminUser._id },
+      { type: "bullet", icon: "💻", text: "Upwork, Fiverr এ Freelancing শুরু",        isActive: true, order: 1, createdBy: adminUser._id },
+      { type: "bullet", icon: "📁", text: "শক্তিশালী GitHub Portfolio তৈরি",          isActive: true, order: 2, createdBy: adminUser._id },
+      { type: "bullet", icon: "📝", text: "Professional CV ও LinkedIn Profile",       isActive: true, order: 3, createdBy: adminUser._id },
+      { type: "bullet", icon: "🎤", text: "Mock Interview ও Job Referral সাপোর্ট",   isActive: true, order: 4, createdBy: adminUser._id },
+    ],
+    (i) => ({ type: i.type, text: i.text }),
+    "CourseCareer bullets"
+  );
+
+  // Stat cards (right side grid)
+  await upsertMany(
+    CourseCareerItem,
+    [
+      { type: "stat", icon: "🎓", value: "৫০০+", label: "সফল গ্র্যাজুয়েট",   colorFrom: "#7c3aed", colorTo: "#6d28d9", isActive: true, order: 0, createdBy: adminUser._id },
+      { type: "stat", icon: "💼", value: "৮৫%",  label: "জব পেয়েছে",          colorFrom: "#db2777", colorTo: "#be185d", isActive: true, order: 1, createdBy: adminUser._id },
+      { type: "stat", icon: "📈", value: "৩x",   label: "স্যালারি বৃদ্ধি",    colorFrom: "#4f46e5", colorTo: "#4338ca", isActive: true, order: 2, createdBy: adminUser._id },
+      { type: "stat", icon: "🤝", value: "৬০+",  label: "হায়ারিং পার্টনার",  colorFrom: "#0891b2", colorTo: "#0e7490", isActive: true, order: 3, createdBy: adminUser._id },
+    ],
+    (i) => ({ type: i.type, value: i.value, label: i.label }),
+    "CourseCareer stats"
+  );
+
+  // ── COURSE DETAILS → REVIEWS SECTION ─────────────────────────────────────
+  console.log("⭐ Course Reviews");
+
+  let reviewSettings = await CourseReviewSettings.findOne();
+  if (!reviewSettings) {
+    await CourseReviewSettings.create({
+      heading:      "শিক্ষার্থীরা কী বলছে?",
+      avgRating:    4.8,
+      totalReviews: "১২,৪৮০",
+      displayStyle: "grid-slider",
+      autoSlideMs:  3000,
+    });
+    console.log("  ✅ CourseReviewSettings created");
+  } else {
+    console.log("  ⏭️  CourseReviewSettings already exists");
+  }
+
+  await upsertMany(
+    CourseReview,
+    [
+      { name: "রাহিম উদ্দিন",  role: "Junior Developer @ TechCorp",    avatarSeed: "rahim",  rating: 5, order: 0, isActive: true, text: "এই কোর্সটা আমার জীবন বদলে দিয়েছে। ৬ মাসে জব পেয়েছি। এত ভালো পড়ান যে কঠিন বিষয়ও সহজ মনে হয়!", createdBy: adminUser._id },
+      { name: "ফাতেমা খাতুন", role: "Freelancer @ Upwork",             avatarSeed: "fatema", rating: 5, order: 1, isActive: true, text: "আমি গৃহিণী ছিলাম, কোডিং জানতাম না। এখন মাসে ৫০k+ ইনকাম করি। এই কোর্স সত্যিকারের জীবন পরিবর্তন করে।", createdBy: adminUser._id },
+      { name: "করিম হোসেন",   role: "Full Stack Dev @ StartupBD",      avatarSeed: "karim",  rating: 5, order: 2, isActive: true, text: "Projects গুলো এত real-world যে job interview তে সরাসরি কাজে লেগেছে। Community support অসাধারণ!", createdBy: adminUser._id },
+      { name: "নাফিসা আক্তার",role: "React Developer @ RemoteJob",     avatarSeed: "nafisa", rating: 5, order: 3, isActive: true, text: "বিদেশ থেকে remote job পেয়েছি এই কোর্সের পরে। Mentor support ছাড়া এত দূর আসতে পারতাম না।", createdBy: adminUser._id },
+      { name: "সজীব আহমেদ",   role: "Software Engineer @ BJIT",        avatarSeed: "sajib",  rating: 4, order: 4, isActive: true, text: "Curriculum অনেক comprehensive। Node.js ও React একসাথে শিখতে পেরেছি যা অনেক জায়গায় আলাদা করে শেখায়।", createdBy: adminUser._id },
+      { name: "মারিয়া বেগম",  role: "Frontend Dev @ Agency",           avatarSeed: "maria",  rating: 5, order: 5, isActive: true, text: "মেয়ে হিসেবে tech এ আসতে ভয় ছিল। এই community আমাকে confident করেছে। ধন্যবাদ!", createdBy: adminUser._id },
+    ],
+    (r) => ({ name: r.name, role: r.role }),
+    "CourseReviews"
   );
 
   // ── ADD FUTURE SECTIONS HERE ──────────────────────────────────────────────
