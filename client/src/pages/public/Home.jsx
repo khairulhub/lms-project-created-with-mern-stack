@@ -17,6 +17,8 @@ import CourseCurriculumSection from "./CourseDetails/CourseCurriculumSection";
 import CourseProjectsSection from "./CourseDetails/CourseProjectsSection";
 import CourseCareerSection from "./CourseDetails/CourseCareerSection";
 import CourseReviewsSection from "./CourseDetails/CourseReviewsSection";
+import CourseFAQSection from "./CourseDetails/CourseFAQSection";
+import CourseCTASection from "./CourseDetails/CourseCTASection";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared small components (used by the Course sections below)
@@ -56,46 +58,6 @@ const Accordion = ({ title, children, defaultOpen = false }) => {
   );
 };
 
-
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 3 — HIGHLIGHTS
-// Now imported from ./CourseDetails/CourseHighlightsSection — fetches its
-// own data from /api/course-highlights/:categorySlug (admin-editable per
-// category from Admin → Course Details → Highlights Section). The selected
-// category (from the Category section above) decides which dataset shows.
-// ════════════════════════════════════════════════════════════════
-
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 4 — VIDEO
-// Now imported from ./CourseDetails/CourseVideoSection — fetches its own
-// data from /api/course-video/:categorySlug (admin-editable per category;
-// admin can pick a YouTube URL or upload a video file, max 200MB).
-// ════════════════════════════════════════════════════════════════
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 5 — WHAT YOU'LL LEARN
-// Now imported from ./CourseDetails/CourseWhatYouLearnSection — fetches its
-// own data from /api/course-what-you-learn/:categorySlug (admin-editable
-// per category from Admin → Course Details → What You'll Learn).
-// ════════════════════════════════════════════════════════════════
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 6 — CURRICULUM
-// ════════════════════════════════════════════════════════════════
-// Imported from ./CourseDetails/CourseCurriculumSection — fetches its
-// own data from /api/course-curriculum/:categorySlug (admin-editable
-// per category from Admin → Course Details → Curriculum).
-// ════════════════════════════════════════════════════════════════
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 7 — PROJECTS
-// ════════════════════════════════════════════════════════════════
-// Imported from ./CourseDetails/CourseProjectsSection
-// Shows latest 4 active. Grid or Slider layout from Admin panel.
-
-// ════════════════════════════════════════════════════════════════
 // COURSE SECTION 8 — SUPPORT
 // ════════════════════════════════════════════════════════════════
 const CourseSupportSection = () => (
@@ -126,88 +88,7 @@ const CourseSupportSection = () => (
   </section>
 );
 
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 9 — CAREER
-// ════════════════════════════════════════════════════════════════
-// Imported from ./CourseDetails/CourseCareerSection
-// Shows latest 3 active bullets + all active stats. Split or Cards
-// layout toggled from Admin → Course Details → Career.
 
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 10 — REVIEWS
-// ════════════════════════════════════════════════════════════════
-// Imported from ./CourseDetails/CourseReviewsSection
-// Grid Slider or Side Slider — toggled from Admin → Course Details → Reviews.
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 11 — FAQ
-// ════════════════════════════════════════════════════════════════
-const CourseFAQSection = () => (
-  <section style={{ background: "#0d011f" }} className="py-16 px-4">
-    <div className="max-w-4xl mx-auto">
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white text-center mb-3">
-        সচরাচর জিজ্ঞাসা
-      </h2>
-      <p className="text-gray-400 text-center text-sm mb-10">
-        তোমার মনে যা আসছে সেই প্রশ্নের উত্তর এখানে আছে
-      </p>
-      <div className="space-y-3">
-        {[
-          { q: "কোনো পূর্ব অভিজ্ঞতা ছাড়া কি এই কোর্স করা যাবে?", a: "হ্যাঁ! একদম শুরু থেকে শেখানো হয়। Computer চালাতে পারলেই যথেষ্ট।" },
-          { q: "কোর্সটি কতদিনে শেষ করা যাবে?", a: "সাধারণত ১৬ সপ্তাহে শেষ হয়। তবে লাইফটাইম অ্যাক্সেস থাকায় নিজের গতিতে শিখতে পারবে।" },
-          { q: "পেমেন্ট কীভাবে করব?", a: "bKash, Nagad, Rocket, ক্রেডিট/ডেবিট কার্ড বা ব্যাংক ট্রান্সফার — সব উপায়ে করা যাবে।" },
-          { q: "Certificate কি দেওয়া হবে?", a: "হ্যাঁ, কোর্স সম্পন্ন করলে আন্তর্জাতিকভাবে স্বীকৃত Certificate পাবে।" },
-          { q: "Job guarantee কি আছে?", a: "আমরা ১০০% job guarantee দিই না, তবে job support, mock interview এবং referral দিয়ে থাকি। ৮৫% গ্র্যাজুয়েট ৬ মাসের মধ্যে জব পেয়েছে।" },
-          { q: "কোর্সের ভাষা কী?", a: "সম্পূর্ণ বাংলায় পড়ানো হয়। তবে code এবং technical terms ইংরেজিতে থাকে।" },
-          { q: "মানি-ব্যাক গ্যারান্টি কি সত্যিই আছে?", a: "হ্যাঁ, ৩০ দিনের মধ্যে সন্তুষ্ট না হলে সম্পূর্ণ টাকা ফেরত — কোনো প্রশ্ন ছাড়াই।" },
-        ].map((faq, i) => (
-          <Accordion key={i} title={faq.q}>
-            <p className="text-gray-300 text-sm leading-relaxed">{faq.a}</p>
-          </Accordion>
-        ))}
-      </div>
-    </div>
-  </section>
-);
-
-// ════════════════════════════════════════════════════════════════
-// COURSE SECTION 12 — FINAL CTA
-// ════════════════════════════════════════════════════════════════
-const CourseCTASection = () => (
-  <section className="py-16 px-4"
-    style={{ background: "linear-gradient(135deg, #3b0764, #1a0533, #500724)" }}>
-    <div className="max-w-3xl mx-auto text-center">
-      <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
-        আজই শুরু করো তোমার ক্যারিয়ার জার্নি 🚀
-      </h2>
-      <p className="text-purple-200 text-base mb-8 leading-relaxed">
-        হাজারো শিক্ষার্থী ইতিমধ্যে শুরু করে ফেলেছে। তুমি কি পিছিয়ে থাকবে?
-        আজই ভর্তি হও এবং ৩০ দিনের মানি-ব্যাক গ্যারান্টি উপভোগ করো।
-      </p>
-      <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-        <Link to="/enroll"
-          className="bg-white hover:bg-gray-100 font-extrabold px-10 py-4 rounded-2xl transition-all hover:scale-105 text-lg"
-          style={{ color: "#3b0764" }}>
-          এখনই ভর্তি হও — ৳৪,৫০০
-        </Link>
-        <button className="flex items-center justify-center gap-2 text-white font-medium px-8 py-4 rounded-2xl transition-colors border-2"
-          style={{ borderColor: "rgba(255,255,255,0.3)" }}>
-          <FiPlay size={16} /> Free Demo দেখো
-        </button>
-      </div>
-      <div className="flex flex-wrap justify-center gap-6 text-sm text-purple-300">
-        <span>✅ ৩০ দিনের মানি-ব্যাক</span>
-        <span>✅ লাইফটাইম অ্যাক্সেস</span>
-        <span>✅ Certificate</span>
-        <span>✅ Community Support</span>
-      </div>
-    </div>
-  </section>
-);
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN HOME PAGE — Course sections first, then the original Home content
-// ═══════════════════════════════════════════════════════════════════════════
 const Home = () => {
   const [categories, setCategories] = useState([]);
   const [blogs, setBlogs] = useState([]);
@@ -364,19 +245,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ── CTA ───────────────────────────────────────────────────────────── */}
-      <section className="py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Get Started?</h2>
-          <p className="text-gray-400 mb-8">Create your free account and explore the platform</p>
-          <Link
-            to="/signup"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold px-10 py-4 rounded-xl transition-all hover:scale-105 text-base"
-          >
-            Create Free Account <FiArrowRight />
-          </Link>
-        </div>
-      </section>
+   
     </PublicLayout>
   );
 };

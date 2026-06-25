@@ -20,6 +20,9 @@ const CourseCareerItem        = require("../models/CourseCareerItem");
 const CourseCareerSettings    = require("../models/CourseCareerSettings");
 const CourseReview            = require("../models/CourseReview");
 const CourseReviewSettings    = require("../models/CourseReviewSettings");
+const CourseFAQ               = require("../models/CourseFAQ");
+const CourseFAQSettings       = require("../models/CourseFAQSettings");
+const CourseCTASettings       = require("../models/CourseCTASettings");
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 // Upsert one document by a unique key, without touching it if it already exists.
@@ -793,6 +796,47 @@ const seedDatabase = async () => {
     (r) => ({ name: r.name, role: r.role }),
     "CourseReviews"
   );
+
+  // ── COURSE DETAILS → FAQ SECTION ─────────────────────────────────────────
+  console.log("❓ Course FAQ");
+  let faqSettings = await CourseFAQSettings.findOne();
+  if (!faqSettings) {
+    await CourseFAQSettings.create({ heading: "সচরাচর জিজ্ঞাসা", subtitle: "তোমার মনে যা আসছে সেই প্রশ্নের উত্তর এখানে আছে" });
+    console.log("  ✅ CourseFAQSettings created");
+  } else { console.log("  ⏭️  CourseFAQSettings already exists"); }
+
+  await upsertMany(
+    CourseFAQ,
+    [
+      { question: "কোনো পূর্ব অভিজ্ঞতা ছাড়া কি এই কোর্স করা যাবে?",  answer: "হ্যাঁ! একদম শুরু থেকে শেখানো হয়। Computer চালাতে পারলেই যথেষ্ট।", order: 0, isActive: true, createdBy: adminUser._id },
+      { question: "কোর্সটি কতদিনে শেষ করা যাবে?",                       answer: "সাধারণত ১৬ সপ্তাহে শেষ হয়। তবে লাইফটাইম অ্যাক্সেস থাকায় নিজের গতিতে শিখতে পারবে।", order: 1, isActive: true, createdBy: adminUser._id },
+      { question: "পেমেন্ট কীভাবে করব?",                                  answer: "bKash, Nagad, Rocket, ক্রেডিট/ডেবিট কার্ড বা ব্যাংক ট্রান্সফার — সব উপায়ে করা যাবে।", order: 2, isActive: true, createdBy: adminUser._id },
+      { question: "Certificate কি দেওয়া হবে?",                           answer: "হ্যাঁ, কোর্স সম্পন্ন করলে আন্তর্জাতিকভাবে স্বীকৃত Certificate পাবে।", order: 3, isActive: true, createdBy: adminUser._id },
+      { question: "Job guarantee কি আছে?",                                answer: "আমরা ১০০% job guarantee দিই না, তবে job support, mock interview এবং referral দিয়ে থাকি। ৮৫% গ্র্যাজুয়েট ৬ মাসের মধ্যে জব পেয়েছে।", order: 4, isActive: true, createdBy: adminUser._id },
+      { question: "কোর্সের ভাষা কী?",                                    answer: "সম্পূর্ণ বাংলায় পড়ানো হয়। তবে code এবং technical terms ইংরেজিতে থাকে।", order: 5, isActive: true, createdBy: adminUser._id },
+      { question: "মানি-ব্যাক গ্যারান্টি কি সত্যিই আছে?",               answer: "হ্যাঁ, ৩০ দিনের মধ্যে সন্তুষ্ট না হলে সম্পূর্ণ টাকা ফেরত — কোনো প্রশ্ন ছাড়াই।", order: 6, isActive: true, createdBy: adminUser._id },
+    ],
+    (f) => ({ question: f.question }),
+    "CourseFAQs"
+  );
+
+  // ── COURSE DETAILS → CTA SECTION ─────────────────────────────────────────
+  console.log("📣 Course CTA");
+  let ctaSettings = await CourseCTASettings.findOne();
+  if (!ctaSettings) {
+    await CourseCTASettings.create({
+      heading:          "আজই শুরু করো তোমার ক্যারিয়ার জার্নি 🚀",
+      subtitle:         "হাজারো শিক্ষার্থী ইতিমধ্যে শুরু করে ফেলেছে। তুমি কি পিছিয়ে থাকবে? আজই ভর্তি হও এবং ৩০ দিনের মানি-ব্যাক গ্যারান্টি উপভোগ করো।",
+      primaryBtnText:   "এখনই ভর্তি হও — ৳৪,৫০০",
+      secondaryBtnText: "Free Demo দেখো",
+      trustBadges:      ["✅ ৩০ দিনের মানি-ব্যাক", "✅ লাইফটাইম অ্যাক্সেস", "✅ Certificate", "✅ Community Support"],
+      gradientFrom:     "#3b0764",
+      gradientVia:      "#1a0533",
+      gradientTo:       "#500724",
+      isActive:         true,
+    });
+    console.log("  ✅ CourseCTASettings created");
+  } else { console.log("  ⏭️  CourseCTASettings already exists"); }
 
   // ── ADD FUTURE SECTIONS HERE ──────────────────────────────────────────────
 

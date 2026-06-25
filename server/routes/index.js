@@ -57,6 +57,9 @@ const {
   getAdminReviews, createReview, updateReview, deleteReview,
 } = require("../controllers/courseReviewController");
 
+const { getCourseFAQ, getAdminFAQSettings, updateFAQSettings, getAdminFAQs, createFAQ, updateFAQ, deleteFAQ } = require("../controllers/courseFAQController");
+const { getCourseCTA, getAdminCTA, updateCTA } = require("../controllers/courseCTAController");
+
 
 
 
@@ -207,6 +210,20 @@ router.get("/admin/course-reviews", protect, adminOnly, getAdminReviews);
 router.post("/admin/course-reviews", protect, adminOnly, createReview);
 router.put("/admin/course-reviews/:id", protect, adminOnly, updateReview);
 router.delete("/admin/course-reviews/:id", protect, adminOnly, deleteReview);
+
+// ─── COURSE DETAILS → FAQ SECTION ────────────────────────────────────────────
+router.get("/course-faq", getCourseFAQ);
+router.get("/admin/course-faq/settings", protect, adminOnly, getAdminFAQSettings);
+router.put("/admin/course-faq/settings", protect, adminOnly, updateFAQSettings);
+router.get("/admin/course-faq", protect, adminOnly, getAdminFAQs);
+router.post("/admin/course-faq", protect, adminOnly, createFAQ);
+router.put("/admin/course-faq/:id", protect, adminOnly, updateFAQ);
+router.delete("/admin/course-faq/:id", protect, adminOnly, deleteFAQ);
+
+// ─── COURSE DETAILS → CTA SECTION ────────────────────────────────────────────
+router.get("/course-cta", getCourseCTA);
+router.get("/admin/course-cta", protect, adminOnly, getAdminCTA);
+router.put("/admin/course-cta", protect, adminOnly, updateCTA);
 
 
 
