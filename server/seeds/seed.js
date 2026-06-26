@@ -23,6 +23,7 @@ const CourseReviewSettings    = require("../models/CourseReviewSettings");
 const CourseFAQ               = require("../models/CourseFAQ");
 const CourseFAQSettings       = require("../models/CourseFAQSettings");
 const CourseCTASettings       = require("../models/CourseCTASettings");
+const Course                  = require("../models/Course");
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 // Upsert one document by a unique key, without touching it if it already exists.
@@ -837,6 +838,67 @@ const seedDatabase = async () => {
     });
     console.log("  ✅ CourseCTASettings created");
   } else { console.log("  ⏭️  CourseCTASettings already exists"); }
+
+  // ── COURSES (per category) ────────────────────────────────────────────────
+  console.log("📦 Courses");
+  await upsertMany(
+    Course,
+    [
+      // MERN Stack
+      {
+        category: mernCat._id, emoji: "🚀", badge: "HOT", order: 0, isActive: true,
+        tags: ["Bestseller", "Full Stack"], displayStyle: "list",
+        title: "Complete MERN Stack Development",
+        description: "HTML, CSS, JavaScript, React, Node.js, MongoDB — শূন্য থেকে Full Stack Hero",
+        rating: 4.8, students: "৩২,৫০০", hours: "৬০+",
+        price: 4500, originalPrice: 12000, createdBy: adminUser._id,
+      },
+      {
+        category: mernCat._id, emoji: "⚛️", badge: "NEW", order: 1, isActive: true,
+        tags: ["React", "Advanced"], displayStyle: "list",
+        title: "Advanced React & Redux Mastery",
+        description: "Hooks, Context, Redux Toolkit, React Query — production-level React apps",
+        rating: 4.7, students: "১২,৮০০", hours: "৪০+",
+        price: 3500, originalPrice: 9000, createdBy: adminUser._id,
+      },
+      // PHP / Laravel
+      {
+        category: laravelCat._id, emoji: "🐘", badge: "HOT", order: 0, isActive: true,
+        tags: ["Bestseller", "Backend"], displayStyle: "list",
+        title: "PHP & Laravel Complete Course",
+        description: "PHP OOP থেকে Laravel — MVC, Eloquent, API, Authentication",
+        rating: 4.7, students: "১৮,২০০", hours: "৫০+",
+        price: 4000, originalPrice: 10000, createdBy: adminUser._id,
+      },
+      {
+        category: laravelCat._id, emoji: "🗄️", badge: "NEW", order: 1, isActive: true,
+        tags: ["MySQL", "Database"], displayStyle: "list",
+        title: "MySQL Database Mastery",
+        description: "Joins, Indexing, Stored Procedures, Query Optimization",
+        rating: 4.6, students: "৮,৫০০", hours: "২৫+",
+        price: 2500, originalPrice: 7000, createdBy: adminUser._id,
+      },
+      // Networking
+      {
+        category: networkingCat._id, emoji: "🌐", badge: "HOT", order: 0, isActive: true,
+        tags: ["CCNA", "Cisco"], displayStyle: "list",
+        title: "CCNA Network Engineering",
+        description: "Cisco Router, Switch, VLAN, Routing Protocols — CCNA Exam Prep",
+        rating: 4.9, students: "২২,০০০", hours: "৫৫+",
+        price: 4500, originalPrice: 11000, createdBy: adminUser._id,
+      },
+      {
+        category: networkingCat._id, emoji: "📡", badge: "POPULAR", order: 1, isActive: true,
+        tags: ["MikroTik", "ISP"], displayStyle: "list",
+        title: "MikroTik RouterOS Complete",
+        description: "Winbox, DHCP, Firewall, Hotspot, Bandwidth Management",
+        rating: 4.8, students: "১৫,৬০০", hours: "৩৫+",
+        price: 3500, originalPrice: 8000, createdBy: adminUser._id,
+      },
+    ],
+    (c) => ({ category: c.category, title: c.title }),
+    "Courses"
+  );
 
   // ── ADD FUTURE SECTIONS HERE ──────────────────────────────────────────────
 

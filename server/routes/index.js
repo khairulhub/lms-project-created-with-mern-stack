@@ -59,6 +59,7 @@ const {
 
 const { getCourseFAQ, getAdminFAQSettings, updateFAQSettings, getAdminFAQs, createFAQ, updateFAQ, deleteFAQ } = require("../controllers/courseFAQController");
 const { getCourseCTA, getAdminCTA, updateCTA } = require("../controllers/courseCTAController");
+const { getPublicCourses, getPublicCourse, getAdminCourses, createCourse, updateCourse, deleteCourse } = require("../controllers/courseController");
 
 
 
@@ -224,6 +225,15 @@ router.delete("/admin/course-faq/:id", protect, adminOnly, deleteFAQ);
 router.get("/course-cta", getCourseCTA);
 router.get("/admin/course-cta", protect, adminOnly, getAdminCTA);
 router.put("/admin/course-cta", protect, adminOnly, updateCTA);
+
+// ─── COURSES (category-wise) ──────────────────────────────────────────────────
+router.get("/courses",     getPublicCourses);           // public — ?category=slug
+router.get("/courses/:id", getPublicCourse);            // public — single course
+
+router.get("/admin/courses",     protect, adminOnly, getAdminCourses);
+router.post("/admin/courses",    protect, adminOnly, createCourse);
+router.put("/admin/courses/:id", protect, adminOnly, updateCourse);
+router.delete("/admin/courses/:id", protect, adminOnly, deleteCourse);
 
 
 

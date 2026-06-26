@@ -10,6 +10,7 @@ import Signup from "./pages/public/Signup";
 import Blogs from "./pages/public/Blogs";
 import BlogDetail from "./pages/public/BlogDetail";
 import Categories from "./pages/public/Categories";
+import CourseSingleDetails from "./pages/public/CourseSingleDetails";
 
 // Student pages
 import StudentDashboard from "./pages/student/StudentDashboard";
@@ -52,6 +53,7 @@ import AdminCourseCareer from "./pages/admin/AdminCourseCareer";
 import AdminCourseReviews from "./pages/admin/AdminCourseReviews";
 import AdminCourseFAQ from "./pages/admin/AdminCourseFAQ";
 import AdminCourseCTA from "./pages/admin/AdminCourseCTA";
+import AdminCourses from "./pages/admin/AdminCourses";
 
 
 function App() {
@@ -76,6 +78,7 @@ function App() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:slug" element={<BlogDetail />} />
           <Route path="/categories" element={<Categories />} />
+          <Route path="/courses/:id" element={<CourseSingleDetails />} />
 
           {/* ── STUDENT (any logged-in user) ─────────── */}
           <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
@@ -104,6 +107,7 @@ function App() {
           <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers /></ProtectedRoute>} />
           <Route path="/admin/instructor-requests" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInstructorRequests /></ProtectedRoute>} />
           <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCategories /></ProtectedRoute>} />
+          <Route path="/admin/courses"    element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourses /></ProtectedRoute>} />
           <Route path="/admin/blogs" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBlogs /></ProtectedRoute>} />
           <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProfile /></ProtectedRoute>} />
           <Route path="/admin/navbar" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNavMenu /></ProtectedRoute>} />

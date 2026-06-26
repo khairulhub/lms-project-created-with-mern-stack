@@ -11,10 +11,18 @@ const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // Course Details submenu open/closed — auto-open if current page is inside it.
-  const [courseDetailsOpen, setCourseDetailsOpen] = useState(
-    location.pathname.startsWith("/admin/course-details")
-  );
+  // Tracks open/closed state PER submenu group (keyed by label), so clicking
+  // one group (e.g. "Categories") never affects another group's open state
+  // (e.g. "Course Details"). Previously this was a single shared boolean,
+  // which caused every group to open/close together.
+  const [openGroups, setOpenGroups] = useState({
+    "Course Details": location.pathname.startsWith("/admin/course-details"),
+    "Categories": location.pathname.startsWith("/admin/categories") || location.pathname.startsWith("/admin/courses"),
+  });
+
+  const toggleGroup = (label) => {
+    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -25,7 +33,12 @@ const DashboardLayout = ({ children }) => {
     { to: "/admin/dashboard", icon: <FiHome />, label: "Dashboard" },
     { to: "/admin/users", icon: <FiUsers />, label: "All Users" },
     { to: "/admin/instructor-requests", icon: <FiCheckCircle />, label: "Instructor Requests" },
-    { to: "/admin/categories", icon: <FiTag />, label: "Categories" },
+    { to: "/admin/categories", icon: <FiTag />, label: "Categories",
+      children: [
+        { to: "/admin/categories", label: "All Categories" },
+        { to: "/admin/courses",    label: "Courses" },
+      ],
+    },
     { to: "/admin/blogs", icon: <FiFileText />, label: "Blogs" },
     {
       label: "Course Details",
@@ -105,16 +118,16 @@ const DashboardLayout = ({ children }) => {
             // Expandable group, e.g. "Course Details" -> "Course Hero Section"
             <div key={link.label}>
               <button
-                onClick={() => setCourseDetailsOpen((o) => !o)}
+                onClick={() => toggleGroup(link.label)}
                 className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
               >
                 <span className="flex items-center gap-3">
                   <span className="text-base">{link.icon}</span>
                   {link.label}
                 </span>
-                {courseDetailsOpen ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+                {openGroups[link.label] ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
               </button>
-              {courseDetailsOpen && (
+              {openGroups[link.label] && (
                 <div className="ml-6 mt-1 space-y-1 border-l border-gray-800 pl-3">
                   {link.children.map((sub) => (
                     <NavLink
