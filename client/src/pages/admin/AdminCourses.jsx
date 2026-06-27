@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiSave, FiList, FiGrid, FiImage } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiSave, FiList, FiGrid, FiImage, FiBookOpen } from "react-icons/fi";
 import IconPicker from "../../components/common/IconPicker";
+import AdminCourseDetailModal from "./AdminCourseDetailModal";
 
 const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
 
@@ -26,6 +27,7 @@ const AdminCourses = () => {
   const [form,        setForm]        = useState(EMPTY_FORM);
   const [saving,      setSaving]      = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [detailCourse, setDetailCourse] = useState(null); // course for detail modal
 
   // load categories
   useEffect(() => {
@@ -233,12 +235,23 @@ const AdminCourses = () => {
                   className={`text-xs px-2.5 py-1 rounded-full transition-colors ${c.isActive ? "text-green-400 bg-green-500/10 hover:bg-green-500/20" : "text-gray-500 bg-gray-700 hover:bg-gray-600"}`}>
                   {c.isActive ? "Active" : "Inactive"}
                 </button>
+                <button onClick={() => setDetailCourse(c)}
+                  title="Course Details manage koro"
+                  className="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"><FiBookOpen size={14} /></button>
                 <button onClick={() => openEdit(c)} className="p-1.5 text-gray-400 hover:text-cyan-400 hover:bg-gray-800 rounded-lg transition-colors"><FiEdit2 size={14} /></button>
                 <button onClick={() => handleDelete(c._id, c.title)} className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"><FiTrash2 size={14} /></button>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* ── COURSE DETAIL MODAL ── */}
+      {detailCourse && (
+        <AdminCourseDetailModal
+          course={detailCourse}
+          onClose={() => setDetailCourse(null)}
+        />
       )}
 
       {/* ── MODAL ── */}

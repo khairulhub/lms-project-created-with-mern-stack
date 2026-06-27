@@ -54,6 +54,8 @@ import AdminCourseReviews from "./pages/admin/AdminCourseReviews";
 import AdminCourseFAQ from "./pages/admin/AdminCourseFAQ";
 import AdminCourseCTA from "./pages/admin/AdminCourseCTA";
 import AdminCourses from "./pages/admin/AdminCourses";
+import AdminStudentCourseReviews from "./pages/admin/AdminStudentCourseReviews";
+import AdminInstructorReviews from "./pages/admin/AdminInstructorReviews";
 
 
 function App() {
@@ -123,6 +125,10 @@ function App() {
           
           <Route path="/admin/course-details/video" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseVideo /></ProtectedRoute>} />
           <Route path="/admin/course-details/what-you-learn" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseWhatYouLearn /></ProtectedRoute>} />
+
+          {/* ── ADMIN REVIEWS ────────────────────────────── */}
+          <Route path="/admin/reviews/course-reviews"     element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudentCourseReviews /></ProtectedRoute>} />
+          <Route path="/admin/reviews/instructor-reviews" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInstructorReviews /></ProtectedRoute>} />
 
           {/* ── 404 ──────────────────────────────────── */}
           <Route path="*" element={

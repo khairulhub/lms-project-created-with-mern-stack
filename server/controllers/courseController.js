@@ -21,7 +21,9 @@ const getPublicCourses = asyncHandler(async (req, res) => {
 
 // GET /api/courses/:id  — single course details
 const getPublicCourse = asyncHandler(async (req, res) => {
-  const course = await Course.findById(req.params.id).populate("category", "name slug icon");
+  const course = await Course.findById(req.params.id)
+    .populate("category", "name slug icon")
+    .populate("createdBy", "name email profileImage designation bio role");
   if (!course || !course.isActive) return res.status(404).json({ message: "Course not found" });
   res.json(course);
 });

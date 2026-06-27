@@ -60,6 +60,15 @@ const {
 const { getCourseFAQ, getAdminFAQSettings, updateFAQSettings, getAdminFAQs, createFAQ, updateFAQ, deleteFAQ } = require("../controllers/courseFAQController");
 const { getCourseCTA, getAdminCTA, updateCTA } = require("../controllers/courseCTAController");
 const { getPublicCourses, getPublicCourse, getAdminCourses, createCourse, updateCourse, deleteCourse } = require("../controllers/courseController");
+const {
+  getPublicCourseDetail, getAdminCourseDetail, updateCourseDetailMeta,
+  addWhatYouGet, updateWhatYouGet, deleteWhatYouGet,
+  addRequirement, updateRequirement, deleteRequirement,
+  addFAQ: addCDFAQ, updateFAQ: updateCDFAQ, deleteFAQ: deleteCDFAQ,
+  addReview: addCDReview, updateReview: updateCDReview, deleteReview: deleteCDReview,
+  addCurriculumSection: addCDSection, updateCurriculumSection: updateCDSection, deleteCurriculumSection: deleteCDSection,
+  addLecture: addCDLecture, updateLecture: updateCDLecture, deleteLecture: deleteCDLecture,
+} = require("../controllers/courseDetailController");
 
 
 
@@ -238,5 +247,72 @@ router.delete("/admin/courses/:id", protect, adminOnly, deleteCourse);
 
 
 
+
+// ─── COURSE DETAIL (per-course, all sections) ────────────────────────────────
+// Public
+router.get("/course-details/:courseId", getPublicCourseDetail);
+
+// Admin — meta (intro video)
+router.get("/admin/course-details/:courseId",  protect, adminOnly, getAdminCourseDetail);
+router.put("/admin/course-details/:courseId",  protect, adminOnly, updateCourseDetailMeta);
+
+// Admin — whatYouGet
+router.post("/admin/course-details/:courseId/what-you-get",          protect, adminOnly, addWhatYouGet);
+router.put("/admin/course-details/:courseId/what-you-get/:itemId",   protect, adminOnly, updateWhatYouGet);
+router.delete("/admin/course-details/:courseId/what-you-get/:itemId",protect, adminOnly, deleteWhatYouGet);
+
+// Admin — requirements
+router.post("/admin/course-details/:courseId/requirements",          protect, adminOnly, addRequirement);
+router.put("/admin/course-details/:courseId/requirements/:itemId",   protect, adminOnly, updateRequirement);
+router.delete("/admin/course-details/:courseId/requirements/:itemId",protect, adminOnly, deleteRequirement);
+
+// Admin — FAQs
+router.post("/admin/course-details/:courseId/faqs",          protect, adminOnly, addCDFAQ);
+router.put("/admin/course-details/:courseId/faqs/:itemId",   protect, adminOnly, updateCDFAQ);
+router.delete("/admin/course-details/:courseId/faqs/:itemId",protect, adminOnly, deleteCDFAQ);
+
+// Admin — Reviews
+router.post("/admin/course-details/:courseId/reviews",          protect, adminOnly, addCDReview);
+router.put("/admin/course-details/:courseId/reviews/:itemId",   protect, adminOnly, updateCDReview);
+router.delete("/admin/course-details/:courseId/reviews/:itemId",protect, adminOnly, deleteCDReview);
+
+// Admin — Curriculum sections
+router.post("/admin/course-details/:courseId/curriculum",                     protect, adminOnly, addCDSection);
+router.put("/admin/course-details/:courseId/curriculum/:sectionId",           protect, adminOnly, updateCDSection);
+router.delete("/admin/course-details/:courseId/curriculum/:sectionId",        protect, adminOnly, deleteCDSection);
+
+// Admin — Lectures inside a section
+router.post("/admin/course-details/:courseId/curriculum/:sectionId/lectures",                    protect, adminOnly, addCDLecture);
+router.put("/admin/course-details/:courseId/curriculum/:sectionId/lectures/:lectureId",          protect, adminOnly, updateCDLecture);
+router.delete("/admin/course-details/:courseId/curriculum/:sectionId/lectures/:lectureId",       protect, adminOnly, deleteCDLecture);
+
+const {
+  getPublicCourseReviews, getAllActiveStudentReviews, submitCourseReview,
+  getAdminCourseReviewCourses, getAdminCourseReviews, updateCourseReview, deleteCourseReview,
+  getPublicInstructorReviews, submitInstructorReview,
+  getAdminInstructorReviewList, getAdminInstructorReviews, updateInstructorReview, deleteInstructorReview,
+} = require("../controllers/studentReviewController");
+
+// ── STUDENT-SUBMITTED REVIEWS ─────────────────────────────────────────────────
+// Public — Course
+router.get("/student-reviews/active-all",          getAllActiveStudentReviews); // must be above :courseId route
+router.get("/student-reviews/course/:courseId",   getPublicCourseReviews);
+router.post("/student-reviews/course/:courseId",  submitCourseReview);
+
+// Public — Instructor
+router.get("/student-reviews/instructor/:instructorId",  getPublicInstructorReviews);
+router.post("/student-reviews/instructor/:instructorId", submitInstructorReview);
+
+// Admin — Course reviews
+router.get("/admin/student-reviews/courses",                    protect, adminOnly, getAdminCourseReviewCourses);
+router.get("/admin/student-reviews/course/:courseId",           protect, adminOnly, getAdminCourseReviews);
+router.put("/admin/student-reviews/:id",                        protect, adminOnly, updateCourseReview);
+router.delete("/admin/student-reviews/:id",                     protect, adminOnly, deleteCourseReview);
+
+// Admin — Instructor reviews
+router.get("/admin/student-reviews/instructors",                    protect, adminOnly, getAdminInstructorReviewList);
+router.get("/admin/student-reviews/instructor/:instructorId",       protect, adminOnly, getAdminInstructorReviews);
+router.put("/admin/student-reviews/instructor-review/:id",          protect, adminOnly, updateInstructorReview);
+router.delete("/admin/student-reviews/instructor-review/:id",       protect, adminOnly, deleteInstructorReview);
 
 module.exports = router;

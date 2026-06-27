@@ -221,22 +221,42 @@ const SideSlider = ({ settings, reviews }) => {
 };
 
 // ── Main Component ────────────────────────────────────────────────────────
+// Home page testimonials — merges TWO sources together:
+//   1) Global CourseReview (admin-curated, platform-wide testimonials —
+//      managed via AdminCourseReviews.jsx, GET /course-reviews)
+//   2) Every course's real, admin-approved StudentCourseReview entries
+//      (GET /student-reviews/active-all — across ALL courses, not just one)
+// Unlike the single-course details page (which prioritizes real student
+// reviews and only falls back to admin-curated ones when there are none),
+// this Home section always shows BOTH together for a broader social-proof mix.
 const CourseReviewsSection = () => {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [reviews,  setReviews]  = useState(DEFAULT_REVIEWS);
   const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
-    api.get("/course-reviews")
-      .then((res) => {
-        setSettings(res.data.settings || DEFAULT_SETTINGS);
-        setReviews(res.data.reviews?.length ? res.data.reviews : DEFAULT_REVIEWS);
-      })
-      .catch(() => {
-        setSettings(DEFAULT_SETTINGS);
-        setReviews(DEFAULT_REVIEWS);
-      })
-      .finally(() => setLoading(false));
+    Promise.all([
+      api.get("/course-reviews"),
+      api.get("/student-reviews/active-all").catch(() => ({ data: [] })),
+    ]).then(([globalRes, studentRes]) => {
+      setSettings(globalRes.data.settings || DEFAULT_SETTINGS);
+
+      const globalReviews  = globalRes.data.reviews || [];
+      const studentReviews = (studentRes.data || []).map((r) => ({
+        _id:        r._id,
+        name:       r.name || "Anonymous",
+        role:       r.course?.title ? `Student · ${r.course.title}` : "Student",
+        avatarSeed: r.name || "guest",
+        rating:     r.rating || 5,
+        text:       r.text || "",
+      }));
+
+      const merged = [...studentReviews, ...globalReviews];
+      setReviews(merged.length ? merged : DEFAULT_REVIEWS);
+    }).catch(() => {
+      setSettings(DEFAULT_SETTINGS);
+      setReviews(DEFAULT_REVIEWS);
+    }).finally(() => setLoading(false));
   }, []);
 
   return (

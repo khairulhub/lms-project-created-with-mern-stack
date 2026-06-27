@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   FiHome, FiUser, FiUsers, FiFileText, FiTag, FiLogOut,
-  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight,
+  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare,
 } from "react-icons/fi";
 
 const DashboardLayout = ({ children }) => {
@@ -18,6 +18,7 @@ const DashboardLayout = ({ children }) => {
   const [openGroups, setOpenGroups] = useState({
     "Course Details": location.pathname.startsWith("/admin/course-details"),
     "Categories": location.pathname.startsWith("/admin/categories") || location.pathname.startsWith("/admin/courses"),
+    "Reviews": location.pathname.startsWith("/admin/reviews"),
   });
 
   const toggleGroup = (label) => {
@@ -40,6 +41,14 @@ const DashboardLayout = ({ children }) => {
       ],
     },
     { to: "/admin/blogs", icon: <FiFileText />, label: "Blogs" },
+    {
+      label: "Reviews",
+      icon: <FiMessageSquare />,
+      children: [
+        { to: "/admin/reviews/course-reviews",      label: "Course Review" },
+        { to: "/admin/reviews/instructor-reviews",  label: "Instructor Review" },
+      ],
+    },
     {
       label: "Course Details",
       icon: <FiBookOpen />,

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import PublicLayout from "../../components/layout/PublicLayout";
+import api from "../../utils/api";
+import toast from "react-hot-toast";
 import {
   FiStar, FiUsers, FiClock, FiCheck, FiChevronDown, FiChevronUp,
   FiChevronLeft, FiChevronRight, FiPlay, FiShield, FiAward, FiSmartphone,
@@ -511,20 +513,35 @@ const ReviewSlider = ({ reviews }) => {
 
 // ── Review submission form (shared shape — used for both student → course,
 // and student → instructor review boxes below) ──────────────────────────
-const ReviewForm = ({ heading, placeholder, onSubmit }) => {
-  const [rating, setRating] = useState(5);
-  const [name, setName] = useState("");
-  const [text, setText] = useState("");
-  const [sent, setSent] = useState(false);
+const ReviewForm = ({ heading, placeholder, onSubmit, courseId, instructorId }) => {
+  const [rating,   setRating]   = useState(5);
+  const [name,     setName]     = useState("");
+  const [email,    setEmail]    = useState("");
+  const [text,     setText]     = useState("");
+  const [sent,     setSent]     = useState(false);
+  const [sending,  setSending]  = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    // DB connect korar somoy: api.post(...) call ekhane hobe.
-    onSubmit?.({ rating, name: name.trim() || "Anonymous", text: text.trim() });
-    setSent(true);
-    setName(""); setText(""); setRating(5);
-    setTimeout(() => setSent(false), 3000);
+    setSending(true);
+    try {
+      const payload = { name: name.trim() || "Anonymous", email: email.trim(), rating, text: text.trim() };
+      if (courseId) {
+        await api.post(`/student-reviews/course/${courseId}`, payload);
+      } else if (instructorId) {
+        await api.post(`/student-reviews/instructor/${instructorId}`, payload);
+      } else {
+        onSubmit?.(payload);
+      }
+      setSent(true);
+      setName(""); setEmail(""); setText(""); setRating(5);
+      setTimeout(() => setSent(false), 4000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Submit failed");
+    } finally {
+      setSending(false);
+    }
   };
 
   const inputClass = "w-full bg-gray-900 border border-purple-900 text-white placeholder-gray-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 transition-colors";
@@ -535,25 +552,36 @@ const ReviewForm = ({ heading, placeholder, onSubmit }) => {
       style={{ background: "linear-gradient(135deg, #1a0533, #0d011f)" }}>
       <h3 className="text-white font-semibold text-sm mb-4">{heading}</h3>
 
-      <div className="mb-3">
-        <label className="block text-xs text-gray-400 mb-1.5">তোমার রেটিং</label>
-        <Stars rating={rating} large onRate={setRating} />
-      </div>
-
-      <div className="mb-3">
-        <input value={name} onChange={(e) => setName(e.target.value)}
-          placeholder="তোমার নাম (ঐচ্ছিক)" className={inputClass} />
-      </div>
-
-      <div className="mb-4">
-        <textarea rows={3} value={text} onChange={(e) => setText(e.target.value)}
-          placeholder={placeholder} className={inputClass + " resize-none"} />
-      </div>
-
-      <button type="submit"
-        className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">
-        <FiSend size={14} /> {sent ? "ধন্যবাদ! জমা হয়েছে ✓" : "রিভিউ জমা দাও"}
-      </button>
+      {sent ? (
+        <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/30 rounded-xl px-4 py-4">
+          <span className="text-2xl">✅</span>
+          <div>
+            <p className="text-green-400 font-semibold text-sm">ধন্যবাদ! Review জমা হয়েছে।</p>
+            <p className="text-gray-400 text-xs mt-0.5">Admin approve করলে public page এ দেখাবে।</p>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="mb-3">
+            <label className="block text-xs text-gray-400 mb-1.5">তোমার রেটিং</label>
+            <Stars rating={rating} large onRate={setRating} />
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <input value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="তোমার নাম *" className={inputClass} />
+            <input value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email (ঐচ্ছিক)" className={inputClass} type="email" />
+          </div>
+          <div className="mb-4">
+            <textarea rows={3} value={text} onChange={(e) => setText(e.target.value)}
+              placeholder={placeholder} className={inputClass + " resize-none"} />
+          </div>
+          <button type="submit" disabled={sending || !text.trim()}
+            className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-gray-950 font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">
+            <FiSend size={14} /> {sending ? "Submitting..." : "রিভিউ জমা দাও"}
+          </button>
+        </>
+      )}
     </form>
   );
 };
@@ -562,37 +590,114 @@ const ReviewForm = ({ heading, placeholder, onSubmit }) => {
 // MAIN PAGE
 // ════════════════════════════════════════════════════════════════════════
 const CourseSingleDetails = () => {
-  // `id` ekhon kichu use hocche na (DUMMY_COURSE diye design kora hocche),
-  // kintu route theke already ashche — DB connect korar somoy upore
-  // commented block-e ei id ta diyeই api.get(`/courses/${id}`) call hobe.
   const { id } = useParams();
-  const course = DUMMY_COURSE;       // ← DB connect korar somoy ei line replace hobe
-  const instructor = DUMMY_INSTRUCTOR; // ← course.createdBy theke asbe
+
+  const [course,     setCourse]     = useState(null);
+  const [detail,     setDetail]     = useState(null);
+  const [loadingCourse, setLoadingCourse] = useState(true);
+
+  useEffect(() => {
+    setLoadingCourse(true);
+    api.get(`/courses/${id}`)
+      .then((res) => setCourse(res.data))
+      .catch(() => { setCourse(DUMMY_COURSE); toast.error("Course load hoyni — dummy data dekhano hochche"); })
+      .finally(() => setLoadingCourse(false));
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    api.get(`/course-details/${id}`)
+      .then((res) => setDetail(res.data))
+      .catch(() => setDetail(null));
+  }, [id]);
+
+  // Resolve data: DB detail or dummy fallback
+  const courseData = course || DUMMY_COURSE;
+
+  // Instructor — courseData.createdBy populate kore User { name, email,
+  // profileImage, designation, bio, role } pathay (courseController.js
+  // .populate("createdBy", ...) theke). Kintu kono field ফাঁকা thakle (e.g.
+  // designation/bio set kora hoyni) field-by-field DUMMY_INSTRUCTOR diye
+  // bhorা hocche — ager code পুরো object replace korto (instructor object
+  // thakleo bio/designation ফাঁকা thakto, dummy asto na).
+  const dbInstructor = courseData.createdBy;
+  const instructor = dbInstructor ? {
+    _id:         dbInstructor._id,
+    name:        dbInstructor.name || DUMMY_INSTRUCTOR.name,
+    title:       dbInstructor.designation || DUMMY_INSTRUCTOR.title,
+    bio:         dbInstructor.bio || DUMMY_INSTRUCTOR.bio,
+    profileImage: dbInstructor.profileImage || "",
+    avatarSeed:  dbInstructor.name || DUMMY_INSTRUCTOR.avatarSeed,
+    rating:      DUMMY_INSTRUCTOR.rating,        // instructor rating/students/courseCount
+    students:    DUMMY_INSTRUCTOR.students,      // eখনো User model-e track hoy na —
+    courseCount: DUMMY_INSTRUCTOR.courseCount,   // tai stat-gulo dummy thakbe DB connect na hoya porjonto
+  } : DUMMY_INSTRUCTOR;
+
+  const whatYouGet  = detail?.whatYouGet?.length   ? detail.whatYouGet   : WHAT_YOU_GET.map((text) => ({ text }));
+  const requirements= detail?.requirements?.length  ? detail.requirements : REQUIREMENTS.map((text) => ({ text }));
+  const curriculum  = detail?.curriculum?.length    ? detail.curriculum.map((s) => ({
+    title:    s.title,
+    lectures: (s.lectures || []).map((l) => ({ title: l.title, duration: l.duration, preview: l.preview, videoUrl: l.videoUrl })),
+  })) : CURRICULUM;
+  const faqs        = detail?.faqs?.length          ? detail.faqs         : FAQ.map((f) => ({ question: f.q, answer: f.a }));
+
+  // Reviews — course details page er rule: REAL student reviews (jodi thake)
+  // shudhu oigulai dekhabe. Student review 0 thakle, tokhon admin-curated
+  // detail.reviews (CourseDetail document-er bhitorer 5ta review, admin
+  // "Course Details" modal theke hard-code kore add kore) fallback hisebe
+  // dekhabe. Dujon-ke ekshathe merge kora hoy na ei page-e — eta shudhu Home
+  // page-er CourseReviewsSection-e hoy (shekhane সব source merge hoy variety-r
+  // jonno). Kono review-i na thakle (notun course) REVIEWS dummy dekhay.
+  const [studentReviews, setStudentReviews] = useState([]);
+  useEffect(() => {
+    if (!id) return;
+    api.get(`/student-reviews/course/${id}`)
+      .then((r) => setStudentReviews(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setStudentReviews([]));
+  }, [id]);
+
+  const normalizedStudentReviews = studentReviews.map((r) => ({
+    name:   r.name || "Anonymous",
+    role:   r.role || "",
+    rating: r.rating || 5,
+    text:   r.text || "",
+    seed:   r.name || "guest",
+  }));
+  const normalizedDetailReviews = (detail?.reviews || []).map((r) => ({
+    name:   r.name || "Anonymous",
+    role:   r.role || "",
+    rating: r.rating || 5,
+    text:   r.text || "",
+    seed:   r.avatarSeed || r.name || "guest",
+  }));
+
+  const reviews = normalizedStudentReviews.length
+    ? normalizedStudentReviews          // real student reviews exist -> show ONLY these
+    : normalizedDetailReviews.length
+      ? normalizedDetailReviews          // no student reviews yet -> fall back to admin-curated ones
+      : REVIEWS;                          // neither exists -> dummy placeholder
+  const totalReviewCount = reviews.length; // header-e "(X reviews)" — always actual count, never a stale dummy number
+  const avgRating = totalReviewCount
+    ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / totalReviewCount).toFixed(1)
+    : courseData.rating;
+  const introVideo  = detail?.introVideoUrl         || courseData.introVideo || "https://www.youtube.com/embed/dQw4w9WgXcQ";
 
   const [coupon, setCoupon] = useState("");
-  const [couponMsg, setCouponMsg] = useState(null); // { ok: bool, text: string }
+  const [couponMsg, setCouponMsg] = useState(null);
 
-  // Video preview modal state
-  // DB connect korar somoy: activeVideo.videoUrl = lecture.videoUrl (DB theke ashbe)
   const [videoModal, setVideoModal] = useState({ open: false, title: "", videoSrc: "" });
 
-  // Collect all preview:true lectures for the "Free Sample Videos" list in modal
-  const previewLectures = CURRICULUM.flatMap((m) =>
-    m.lectures.filter((l) => l.preview)
+  const previewLectures = curriculum.flatMap((m) =>
+    (m.lectures || []).filter((l) => l.preview)
   );
 
-  const openVideoModal = (title, videoSrc) => {
-    setVideoModal({ open: true, title, videoSrc });
-  };
+  const openVideoModal = (title, videoSrc) => setVideoModal({ open: true, title, videoSrc });
   const closeVideoModal = () => setVideoModal((v) => ({ ...v, open: false }));
 
-  const discountPct = course.originalPrice > course.price
-    ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
+  const discountPct = courseData.originalPrice > courseData.price
+    ? Math.round(((courseData.originalPrice - courseData.price) / courseData.originalPrice) * 100)
     : 0;
 
-  // Coupon-tao design-stage e static — kono real validation/DB call nei.
-  // DB connect korar somoy ei function-take api.post("/coupons/apply", ...)
-  // diye replace korle hobe.
   const applyCoupon = (e) => {
     e.preventDefault();
     if (!coupon.trim()) return;
@@ -600,14 +705,25 @@ const CourseSingleDetails = () => {
   };
 
   const handleStudentReview = (review) => {
-    // DB connect korar somoy: api.post(`/courses/${id}/reviews`, review)
     console.log("New course review (static demo, not saved):", review);
   };
 
   const handleInstructorReview = (review) => {
-    // DB connect korar somoy: api.post(`/instructors/${instructor.id}/reviews`, review)
     console.log("New instructor review (static demo, not saved):", review);
   };
+
+  if (loadingCourse) {
+    return (
+      <PublicLayout>
+        <div className="min-h-[60vh] flex items-center justify-center" style={{ background: "#0a0118" }}>
+          <div className="text-center space-y-3">
+            <div className="w-10 h-10 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin mx-auto"/>
+            <p className="text-gray-400 text-sm">Course load হচ্ছে...</p>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
 
   return (
     <PublicLayout>
@@ -620,20 +736,19 @@ const CourseSingleDetails = () => {
         freeVideos={previewLectures.map((l) => ({
           title: l.title,
           duration: l.duration,
-          // DB connect korar somoy: l.videoUrl — ekhon course.introVideo use korche
-          videoUrl: course.introVideo,
+          videoUrl: l.videoUrl || introVideo,
         }))}
       />
 
       {/* ── HERO — full-width image/emoji banner, text below ──────────── */}
       <section style={{ background: "#0a0118" }}>
         <div className="relative w-full h-[58vh] min-h-[320px] max-h-[560px] overflow-hidden">
-          {course.image ? (
-            <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+          {courseData.image ? (
+            <img src={courseData.image} alt={courseData.title} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-[9rem] sm:text-[12rem]"
               style={{ background: "linear-gradient(135deg, #1a0533, #3b0764, #0a0118)" }}>
-              {course.emoji}
+              {courseData.emoji}
             </div>
           )}
           {/* dark gradient overlay so it blends into the text section below */}
@@ -642,17 +757,17 @@ const CourseSingleDetails = () => {
         </div>
 
         <div className="max-w-6xl mx-auto px-4 -mt-6 relative pb-10">
-          {course.category && (
+          {courseData.category && (
             <span className="inline-flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium px-3 py-1.5 rounded-full mb-4">
-              {course.category.icon} {course.category.name}
+              {courseData.category.icon} {courseData.category.name}
             </span>
           )}
 
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            {course.badge && (
-              <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{course.badge}</span>
+            {courseData.badge && (
+              <span className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">{courseData.badge}</span>
             )}
-            {course.tags?.map((t) => (
+            {courseData.tags?.map((t) => (
               <span key={t} className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs font-medium px-3 py-1 rounded-full">
                 {t}
               </span>
@@ -660,27 +775,27 @@ const CourseSingleDetails = () => {
           </div>
 
           <h1 className="text-3xl md:text-5xl font-extrabold text-white leading-tight mb-4 max-w-3xl">
-            {course.title}
+            {courseData.title}
           </h1>
           <p className="text-gray-300 text-base leading-relaxed mb-6 max-w-2xl">
-            {course.description}
+            {courseData.description}
           </p>
 
           <div className="flex flex-wrap items-center gap-5 text-sm">
             <span className="flex items-center gap-1.5 text-yellow-400 font-bold">
-              <Stars rating={course.rating} /> {course.rating}
-              <span className="text-gray-500 font-normal">({course.reviewCount.toLocaleString()} reviews)</span>
+              <Stars rating={avgRating} /> {avgRating}
+              <span className="text-gray-500 font-normal">({totalReviewCount.toLocaleString()} reviews)</span>
             </span>
             <span className="flex items-center gap-1.5 text-gray-400">
-              <FiUsers size={14} /> {course.students} students
+              <FiUsers size={14} /> {courseData.students} students
             </span>
             <span className="flex items-center gap-1.5 text-gray-400">
-              <FiClock size={14} /> {course.hours} hours
+              <FiClock size={14} /> {courseData.hours} hours
             </span>
             <span className="flex items-center gap-1.5 text-gray-400">
-              <FiGlobe size={14} /> {course.language}
+              <FiGlobe size={14} /> {courseData.language || "বাংলা"}
             </span>
-            <span className="text-gray-500">সর্বশেষ আপডেট: {course.lastUpdated}</span>
+            <span className="text-gray-500">সর্বশেষ আপডেট: {courseData.lastUpdated || "২০২৬"}</span>
           </div>
         </div>
       </section>
@@ -696,10 +811,10 @@ const CourseSingleDetails = () => {
             <div>
               <h2 className="text-xl font-bold text-white mb-5">এই কোর্সে যা পাবে</h2>
               <div className="grid sm:grid-cols-2 gap-3">
-                {WHAT_YOU_GET.map((item) => (
-                  <div key={item} className="flex items-start gap-2.5 text-sm text-gray-300">
+                {whatYouGet.map((item, i) => (
+                  <div key={item._id || i} className="flex items-start gap-2.5 text-sm text-gray-300">
                     <FiCheck className="text-cyan-400 mt-0.5 shrink-0" size={16} />
-                    {item}
+                    {item.text}
                   </div>
                 ))}
               </div>
@@ -709,10 +824,10 @@ const CourseSingleDetails = () => {
             <div>
               <h2 className="text-xl font-bold text-white mb-5">প্রয়োজনীয়তা</h2>
               <ul className="space-y-2">
-                {REQUIREMENTS.map((r) => (
-                  <li key={r} className="flex items-start gap-2.5 text-sm text-gray-300">
+                {requirements.map((r, i) => (
+                  <li key={r._id || i} className="flex items-start gap-2.5 text-sm text-gray-300">
                     <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 shrink-0" />
-                    {r}
+                    {r.text}
                   </li>
                 ))}
               </ul>
@@ -722,24 +837,24 @@ const CourseSingleDetails = () => {
             <div>
               <h2 className="text-xl font-bold text-white mb-4">কোর্স কারিকুলাম</h2>
               <CurriculumSection
-                modules={CURRICULUM}
+                modules={curriculum}
                 onPreviewClick={(lecture) =>
-                  openVideoModal(lecture.title, course.introVideo)
-                  // DB connect korar somoy: lecture.videoUrl pass korte hobe
+                  openVideoModal(lecture.title, lecture.videoUrl || introVideo)
                 }
               />
             </div>
 
             {/* Reviews — auto-sliding carousel */}
             <div>
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-bold text-white">শিক্ষার্থীদের রিভিউ</h2>
                 <span className="flex items-center gap-1.5 text-yellow-400 font-bold text-sm">
-                  <Stars rating={course.rating} /> {course.rating}
-                  <span className="text-gray-500 font-normal">({course.reviewCount.toLocaleString()})</span>
+                  <Stars rating={avgRating} /> {avgRating}
+                  <span className="text-gray-500 font-normal">({totalReviewCount.toLocaleString()})</span>
                 </span>
               </div>
-              <ReviewSlider reviews={REVIEWS} />
+              <p className="text-gray-500 text-xs mb-5">মোট {totalReviewCount.toLocaleString()} টি রিভিউ</p>
+              <ReviewSlider reviews={reviews} />
             </div>
 
             {/* Student review submission */}
@@ -748,7 +863,7 @@ const CourseSingleDetails = () => {
               <ReviewForm
                 heading="এই কোর্স সম্পর্কে রিভিউ লিখো"
                 placeholder="কোর্স সম্পর্কে তোমার অভিজ্ঞতা শেয়ার করো..."
-                onSubmit={handleStudentReview}
+                courseId={id}
               />
             </div>
 
@@ -757,40 +872,42 @@ const CourseSingleDetails = () => {
               <h2 className="text-xl font-bold text-white mb-5">কোর্স ইন্সট্রাক্টর</h2>
               <div className="rounded-2xl p-6 border border-purple-800 flex flex-col sm:flex-row gap-5"
                 style={{ background: "linear-gradient(135deg, #1a0533, #12032a)" }}>
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${instructor.avatarSeed}`}
+                <img src={instructor.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${instructor.avatarSeed || instructor.name}`}
                   className="w-20 h-20 rounded-2xl shrink-0" style={{ background: "#2d0a5e" }} alt={instructor.name} />
                 <div className="flex-1">
                   <p className="text-white font-bold text-lg">{instructor.name}</p>
-                  <p className="text-purple-400 text-sm mb-3">{instructor.title}</p>
+                  <p className="text-purple-400 text-sm mb-3">{instructor.title || instructor.designation}</p>
                   <div className="flex flex-wrap gap-4 text-sm text-gray-400 mb-3">
                     <span className="flex items-center gap-1.5 text-yellow-400 font-semibold">
-                      <Stars rating={instructor.rating} /> {instructor.rating} instructor rating
+                      <Stars rating={instructor.rating || 4.9} /> {instructor.rating || 4.9} instructor rating
                     </span>
-                    <span className="flex items-center gap-1.5"><FiUsers size={13} /> {instructor.students} students</span>
-                    <span className="flex items-center gap-1.5"><FiAward size={13} /> {instructor.courseCount} courses</span>
+                    <span className="flex items-center gap-1.5"><FiUsers size={13} /> {instructor.students || "—"} students</span>
+                    <span className="flex items-center gap-1.5"><FiAward size={13} /> {instructor.courseCount || "—"} courses</span>
                   </div>
                   <p className="text-gray-300 text-sm leading-relaxed">{instructor.bio}</p>
                 </div>
               </div>
             </div>
 
-            {/* Instructor review submission */}
+            {/* Instructor review submission — only if real instructor from DB */}
+            {instructor?._id && (
             <div>
               <h2 className="text-xl font-bold text-white mb-5">ইন্সট্রাক্টরকে রিভিউ দাও</h2>
               <ReviewForm
                 heading={`${instructor.name}-কে নিয়ে তোমার মতামত`}
                 placeholder="ইন্সট্রাক্টরের পড়ানোর স্টাইল কেমন লাগলো?"
-                onSubmit={handleInstructorReview}
+                instructorId={instructor._id}
               />
             </div>
+            )}
 
             {/* FAQ */}
             <div>
               <h2 className="text-xl font-bold text-white mb-5">সচরাচর জিজ্ঞাসা</h2>
               <div className="space-y-3">
-                {FAQ.map((f, i) => (
-                  <Accordion key={i} title={f.q}>
-                    <p className="text-gray-300 text-sm leading-relaxed">{f.a}</p>
+                {faqs.map((f, i) => (
+                  <Accordion key={f._id || i} title={f.question || f.q}>
+                    <p className="text-gray-300 text-sm leading-relaxed">{f.answer || f.a}</p>
                   </Accordion>
                 ))}
               </div>
@@ -804,15 +921,15 @@ const CourseSingleDetails = () => {
 
               {/* Intro video thumbnail — click korle VideoModal khulbe */}
               <button
-                onClick={() => openVideoModal(course.title, course.introVideo)}
+                onClick={() => openVideoModal(courseData.title, introVideo)}
                 className="relative w-full h-36 flex items-center justify-center overflow-hidden border-b border-purple-900 group"
                 style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.25), rgba(219,39,119,0.1))" }}
               >
-                {course.image ? (
-                  <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+                {courseData.image ? (
+                  <img src={courseData.image} alt={courseData.title} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-5xl group-hover:scale-110 transition-transform duration-300">
-                    {course.emoji}
+                    {courseData.emoji}
                   </span>
                 )}
                 {/* Play overlay */}
@@ -828,9 +945,9 @@ const CourseSingleDetails = () => {
 
               <div className="p-6">
                 <div className="flex items-baseline gap-3 mb-1">
-                  <span className="text-white font-extrabold text-3xl">৳{course.price.toLocaleString()}</span>
-                  {course.originalPrice > course.price && (
-                    <span className="text-gray-500 line-through text-base">৳{course.originalPrice.toLocaleString()}</span>
+                  <span className="text-white font-extrabold text-3xl">৳{courseData.price?.toLocaleString()}</span>
+                  {courseData.originalPrice > courseData.price && (
+                    <span className="text-gray-500 line-through text-base">৳{courseData.originalPrice?.toLocaleString()}</span>
                   )}
                 </div>
                 {discountPct > 0 && (
@@ -869,7 +986,7 @@ const CourseSingleDetails = () => {
                   <p className="text-gray-400 text-xs font-semibold mb-3 uppercase tracking-wide">This course includes</p>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 text-sm text-gray-300">
-                      <FiPlay className="text-cyan-400 shrink-0" size={16} /> {course.hours} ঘণ্টা ভিডিও
+                      <FiPlay className="text-cyan-400 shrink-0" size={16} /> {courseData.hours} ঘণ্টা ভিডিও
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-300">
                       <FiRepeat className="text-cyan-400 shrink-0" size={16} /> লাইফটাইম অ্যাক্সেস

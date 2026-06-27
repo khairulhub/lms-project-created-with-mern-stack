@@ -24,6 +24,7 @@ const CourseFAQ               = require("../models/CourseFAQ");
 const CourseFAQSettings       = require("../models/CourseFAQSettings");
 const CourseCTASettings       = require("../models/CourseCTASettings");
 const Course                  = require("../models/Course");
+const CourseDetail            = require("../models/CourseDetail");
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 // Upsert one document by a unique key, without touching it if it already exists.
@@ -901,6 +902,118 @@ const seedDatabase = async () => {
   );
 
   // ── ADD FUTURE SECTIONS HERE ──────────────────────────────────────────────
+
+  // ── COURSE DETAIL (per-course: video, what-you-get, requirements, curriculum, faq, reviews) ──
+  console.log("📋 Course Details (per-course)");
+  const mernCourse = await Course.findOne({ title: "Complete MERN Stack Development" });
+  if (mernCourse) {
+    const existing = await CourseDetail.findOne({ course: mernCourse._id });
+    if (!existing) {
+      await CourseDetail.create({
+        course: mernCourse._id,
+        introVideoUrl:  "https://www.youtube.com/embed/dQw4w9WgXcQ",
+        introVideoType: "youtube",
+        whatYouGet: [
+          { text: "৬০+ ঘণ্টা HD ভিডিও কনটেন্ট",                  order: 0, isActive: true },
+          { text: "৪টি বাস্তব প্রজেক্ট (পোর্টফোলিও-রেডি)",         order: 1, isActive: true },
+          { text: "লাইফটাইম অ্যাক্সেস",                             order: 2, isActive: true },
+          { text: "মোবাইল ও ডেস্কটপ থেকে দেখার সুবিধা",            order: 3, isActive: true },
+          { text: "কোর্স শেষে সার্টিফিকেট",                        order: 4, isActive: true },
+          { text: "প্রাইভেট কমিউনিটি গ্রুপ অ্যাক্সেস",            order: 5, isActive: true },
+          { text: "সাপ্তাহিক লাইভ মেন্টরশিপ সেশন",                order: 6, isActive: true },
+          { text: "৩০ দিনের মানি-ব্যাক গ্যারান্টি",                order: 7, isActive: true },
+        ],
+        requirements: [
+          { text: "একটি কম্পিউটার (Windows / Mac / Linux যেকোনো একটি)", order: 0, isActive: true },
+          { text: "ইন্টারনেট সংযোগ",                                    order: 1, isActive: true },
+          { text: "কোনো পূর্ব প্রোগ্রামিং জ্ঞান লাগবে না — শূন্য থেকে শেখানো হবে", order: 2, isActive: true },
+        ],
+        curriculum: [
+          {
+            title: "HTML, CSS ও JavaScript Fundamentals", order: 0, isActive: true,
+            lectures: [
+              { title: "কোর্স পরিচিতি",                       duration: "5:32",  videoUrl: "", preview: true,  order: 0, isActive: true },
+              { title: "ডেভেলপমেন্ট এনভায়রনমেন্ট সেটআপ",    duration: "8:10",  videoUrl: "", preview: true,  order: 1, isActive: true },
+              { title: "HTML স্ট্রাকচার ও ট্যাগ পরিচিতি",    duration: "14:25", videoUrl: "", preview: false, order: 2, isActive: true },
+              { title: "CSS দিয়ে স্টাইলিং বেসিকস",           duration: "16:48", videoUrl: "", preview: false, order: 3, isActive: true },
+              { title: "Flexbox ও Grid Layout",               duration: "22:05", videoUrl: "", preview: false, order: 4, isActive: true },
+              { title: "JavaScript ভ্যারিয়েবল ও ফাংশন",     duration: "19:30", videoUrl: "", preview: false, order: 5, isActive: true },
+              { title: "DOM Manipulation প্র্যাকটিস",         duration: "17:42", videoUrl: "", preview: false, order: 6, isActive: true },
+            ],
+          },
+          {
+            title: "React.js দিয়ে Frontend Development", order: 1, isActive: true,
+            lectures: [
+              { title: "React কী এবং কেন শিখব",            duration: "6:15",  videoUrl: "", preview: true,  order: 0, isActive: true },
+              { title: "Components ও JSX বেসিকস",           duration: "18:20", videoUrl: "", preview: false, order: 1, isActive: true },
+              { title: "Props ও State ব্যবস্থাপনা",         duration: "21:50", videoUrl: "", preview: false, order: 2, isActive: true },
+              { title: "useEffect ও Hooks পরিচিতি",         duration: "24:10", videoUrl: "", preview: false, order: 3, isActive: true },
+              { title: "React Router দিয়ে Navigation",      duration: "19:35", videoUrl: "", preview: false, order: 4, isActive: true },
+              { title: "Forms ও Validation হ্যান্ডলিং",    duration: "23:05", videoUrl: "", preview: false, order: 5, isActive: true },
+            ],
+          },
+          {
+            title: "Node.js ও Express দিয়ে Backend", order: 2, isActive: true,
+            lectures: [
+              { title: "Node.js রানটাইম পরিচিতি",           duration: "9:40",  videoUrl: "", preview: true,  order: 0, isActive: true },
+              { title: "Express সার্ভার সেটআপ",             duration: "15:22", videoUrl: "", preview: false, order: 1, isActive: true },
+              { title: "REST API ডিজাইন প্যাটার্ন",         duration: "20:15", videoUrl: "", preview: false, order: 2, isActive: true },
+              { title: "Middleware ও Error Handling",        duration: "18:48", videoUrl: "", preview: false, order: 3, isActive: true },
+              { title: "JWT দিয়ে Authentication",           duration: "26:30", videoUrl: "", preview: false, order: 4, isActive: true },
+            ],
+          },
+          {
+            title: "MongoDB ও Database Design", order: 3, isActive: true,
+            lectures: [
+              { title: "MongoDB Atlas সেটআপ",               duration: "7:55",  videoUrl: "", preview: true,  order: 0, isActive: true },
+              { title: "Schema ও Model ডিজাইন",             duration: "16:40", videoUrl: "", preview: false, order: 1, isActive: true },
+              { title: "Mongoose দিয়ে CRUD অপারেশন",       duration: "22:18", videoUrl: "", preview: false, order: 2, isActive: true },
+              { title: "Aggregation ও Indexing",            duration: "19:12", videoUrl: "", preview: false, order: 3, isActive: true },
+            ],
+          },
+          {
+            title: "Authentication ও Deployment", order: 4, isActive: true,
+            lectures: [
+              { title: "Password Hashing ও bcrypt",         duration: "12:05", videoUrl: "", preview: false, order: 0, isActive: true },
+              { title: "Render-এ Backend Deploy",           duration: "14:30", videoUrl: "", preview: false, order: 1, isActive: true },
+              { title: "Vercel-এ Frontend Deploy",          duration: "11:48", videoUrl: "", preview: false, order: 2, isActive: true },
+              { title: "Environment Variables ও Security",  duration: "10:22", videoUrl: "", preview: false, order: 3, isActive: true },
+            ],
+          },
+          {
+            title: "৪টি রিয়েল-ওয়ার্ল্ড প্রজেক্ট", order: 5, isActive: true,
+            lectures: [
+              { title: "প্রজেক্ট ১ — E-Commerce অ্যাপ",          duration: "45:10", videoUrl: "", preview: true,  order: 0, isActive: true },
+              { title: "প্রজেক্ট ২ — LMS প্ল্যাটফর্ম",          duration: "52:30", videoUrl: "", preview: false, order: 1, isActive: true },
+              { title: "প্রজেক্ট ৩ — রিয়েল-টাইম চ্যাট অ্যাপ",  duration: "38:45", videoUrl: "", preview: false, order: 2, isActive: true },
+              { title: "প্রজেক্ট ৪ — প্রপার্টি লিস্টিং সাইট",   duration: "41:20", videoUrl: "", preview: false, order: 3, isActive: true },
+            ],
+          },
+        ],
+        faqs: [
+          { question: "কোনো পূর্ব অভিজ্ঞতা ছাড়া কি এই কোর্স করা যাবে?",  answer: "হ্যাঁ! একদম শুরু থেকে শেখানো হয়। Computer চালাতে পারলেই যথেষ্ট।",               order: 0, isActive: true },
+          { question: "কোর্সটি কতদিনে শেষ করা যাবে?",                       answer: "সাধারণত ১৬ সপ্তাহে শেষ হয়, তবে লাইফটাইম অ্যাক্সেস থাকায় নিজের গতিতে শিখতে পারবে।", order: 1, isActive: true },
+          { question: "Certificate কি দেওয়া হবে?",                           answer: "হ্যাঁ, কোর্স সম্পন্ন করলে সার্টিফিকেট পাবে।",                                      order: 2, isActive: true },
+          { question: "মানি-ব্যাক গ্যারান্টি কি সত্যিই আছে?",               answer: "হ্যাঁ, ৩০ দিনের মধ্যে সন্তুষ্ট না হলে সম্পূর্ণ টাকা ফেরত।",                        order: 3, isActive: true },
+          { question: "কোর্সের ভাষা কী?",                                    answer: "সম্পূর্ণ বাংলায় পড়ানো হয়। তবে code এবং technical terms ইংরেজিতে থাকে।",           order: 4, isActive: true },
+          { question: "Job guarantee কি আছে?",                                answer: "আমরা ১০০% job guarantee দিই না, তবে job support ও mock interview দিয়ে থাকি।",       order: 5, isActive: true },
+        ],
+        reviews: [
+          { name: "রাহিম উদ্দিন",  role: "Junior Developer @ TechCorp",   avatarSeed: "rahim",  rating: 5, order: 0, isActive: true, text: "এই কোর্সটা আমার জীবন বদলে দিয়েছে। ৬ মাসে জব পেয়েছি। শেখানোর স্টাইল অসাধারণ।" },
+          { name: "ফাতেমা খাতুন", role: "Freelancer @ Upwork",            avatarSeed: "fatema", rating: 5, order: 1, isActive: true, text: "এখন মাসে ৫০k+ ইনকাম করি। সত্যিকারের জীবন পরিবর্তনকারী কোর্স।" },
+          { name: "করিম হোসেন",   role: "Full Stack Dev @ StartupBD",     avatarSeed: "karim",  rating: 4, order: 2, isActive: true, text: "Projects গুলো এত real-world যে job interview-এ সরাসরি কাজে লেগেছে।" },
+          { name: "নাফিসা আক্তার",role: "React Developer @ RemoteJob",    avatarSeed: "nafisa", rating: 5, order: 3, isActive: true, text: "বিদেশ থেকে remote job পেয়েছি এই কোর্সের পরে। Mentor support ছাড়া এত দূর আসতে পারতাম না।" },
+          { name: "সজীব আহমেদ",   role: "Software Engineer @ BJIT",       avatarSeed: "sajib",  rating: 4, order: 4, isActive: true, text: "Curriculum অনেক comprehensive। Node.js ও React একসাথে শিখতে পেরেছি।" },
+        ],
+        createdBy: adminUser._id,
+      });
+      console.log("  ✅ CourseDetail created for Complete MERN Stack Development");
+    } else {
+      console.log("  ⏭️  CourseDetail already exists for Complete MERN Stack Development");
+    }
+  } else {
+    console.log("  ⚠️  Complete MERN Stack Development course not found — skipping CourseDetail seed");
+  }
 
   // ── COURSE DETAILS → PROJECTS SECTION (global, not per-category) ─────────
   console.log("🛠️  Course Projects");
