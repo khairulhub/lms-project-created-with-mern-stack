@@ -41,6 +41,7 @@ const DashboardLayout = ({ children }) => {
       ],
     },
     { to: "/admin/blogs", icon: <FiFileText />, label: "Blogs" },
+    { to: "/admin/coupons", icon: <FiTag />, label: "Coupons" },
     {
       label: "Reviews",
       icon: <FiMessageSquare />,

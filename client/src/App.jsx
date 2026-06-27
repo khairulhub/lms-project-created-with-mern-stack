@@ -56,6 +56,7 @@ import AdminCourseCTA from "./pages/admin/AdminCourseCTA";
 import AdminCourses from "./pages/admin/AdminCourses";
 import AdminStudentCourseReviews from "./pages/admin/AdminStudentCourseReviews";
 import AdminInstructorReviews from "./pages/admin/AdminInstructorReviews";
+import AdminCoupons from "./pages/admin/AdminCoupons";
 
 
 function App() {
@@ -111,6 +112,7 @@ function App() {
           <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCategories /></ProtectedRoute>} />
           <Route path="/admin/courses"    element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourses /></ProtectedRoute>} />
           <Route path="/admin/blogs" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBlogs /></ProtectedRoute>} />
+          <Route path="/admin/coupons" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCoupons /></ProtectedRoute>} />
           <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProfile /></ProtectedRoute>} />
           <Route path="/admin/navbar" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNavMenu /></ProtectedRoute>} />
           <Route path="/admin/course-details/hero-section" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseHeroSection /></ProtectedRoute>} />

@@ -63,6 +63,7 @@ const AdminDashboard = () => {
             { to: "/admin/users", label: "Manage Users", icon: <FiUsers />, color: "cyan" },
             { to: "/admin/categories", label: "Add Category", icon: <FiTag />, color: "green" },
             { to: "/admin/blogs", label: "Manage Blogs", icon: <FiFileText />, color: "purple" },
+            { to: "/admin/coupons", label: "Coupon Manager", icon: <FiTag />, color: "pink" },
           ].map((action) => (
             <Link key={action.to} to={action.to}
               className={`flex items-center gap-3 bg-gray-900 border border-gray-800 hover:border-${action.color}-500/40 rounded-xl p-4 transition-all`}>

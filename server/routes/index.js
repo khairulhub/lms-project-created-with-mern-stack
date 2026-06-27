@@ -287,6 +287,23 @@ router.put("/admin/course-details/:courseId/curriculum/:sectionId/lectures/:lect
 router.delete("/admin/course-details/:courseId/curriculum/:sectionId/lectures/:lectureId",       protect, adminOnly, deleteCDLecture);
 
 const {
+  validateCoupon,
+  getAllCoupons, getCoupon, createCoupon, updateCoupon, toggleCoupon, deleteCoupon,
+} = require("../controllers/couponController");
+
+// ─── COUPONS ──────────────────────────────────────────────────────────────────
+// Public — validate a code (frontend sidebar uses this)
+router.post("/coupons/validate", validateCoupon);
+
+// Admin — full CRUD
+router.get("/admin/coupons",           protect, adminOnly, getAllCoupons);
+router.get("/admin/coupons/:id",       protect, adminOnly, getCoupon);
+router.post("/admin/coupons",          protect, adminOnly, createCoupon);
+router.put("/admin/coupons/:id",       protect, adminOnly, updateCoupon);
+router.put("/admin/coupons/:id/toggle",protect, adminOnly, toggleCoupon);
+router.delete("/admin/coupons/:id",    protect, adminOnly, deleteCoupon);
+
+const {
   getPublicCourseReviews, getAllActiveStudentReviews, submitCourseReview,
   getAdminCourseReviewCourses, getAdminCourseReviews, updateCourseReview, deleteCourseReview,
   getPublicInstructorReviews, submitInstructorReview,

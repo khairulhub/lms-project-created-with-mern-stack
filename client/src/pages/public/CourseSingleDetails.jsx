@@ -600,7 +600,7 @@ const CourseSingleDetails = () => {
     setLoadingCourse(true);
     api.get(`/courses/${id}`)
       .then((res) => setCourse(res.data))
-      .catch(() => { setCourse(DUMMY_COURSE); toast.error("Course load hoyni — dummy data dekhano hochche"); })
+      .catch(() => setCourse(null))
       .finally(() => setLoadingCourse(false));
   }, [id]);
 
@@ -611,8 +611,17 @@ const CourseSingleDetails = () => {
       .catch(() => setDetail(null));
   }, [id]);
 
-  // Resolve data: DB detail or dummy fallback
-  const courseData = course || DUMMY_COURSE;
+  // courseData — DB থেকে আসা real course data।
+  // price, originalPrice, title, description সবই DB থেকে আসে।
+  // language, lastUpdated এই optional display field গুলো DB-তে না থাকলে
+  // default value দেওয়া হয় — কিন্তু price কখনো dummy দিয়ে replace হয় না।
+  const courseData = course ? {
+    ...course,
+    // optional display fields যা Course model-এ নেই — default দাও
+    language:    course.language    || "বাংলা",
+    lastUpdated: course.lastUpdated || "২০২৬",
+    introVideo:  course.introVideo  || "",
+  } : null;
 
   // Instructor — courseData.createdBy populate kore User { name, email,
   // profileImage, designation, bio, role } pathay (courseController.js
@@ -620,7 +629,7 @@ const CourseSingleDetails = () => {
   // designation/bio set kora hoyni) field-by-field DUMMY_INSTRUCTOR diye
   // bhorা hocche — ager code পুরো object replace korto (instructor object
   // thakleo bio/designation ফাঁকা thakto, dummy asto na).
-  const dbInstructor = courseData.createdBy;
+  const dbInstructor = courseData?.createdBy;
   const instructor = dbInstructor ? {
     _id:         dbInstructor._id,
     name:        dbInstructor.name || DUMMY_INSTRUCTOR.name,
@@ -628,9 +637,9 @@ const CourseSingleDetails = () => {
     bio:         dbInstructor.bio || DUMMY_INSTRUCTOR.bio,
     profileImage: dbInstructor.profileImage || "",
     avatarSeed:  dbInstructor.name || DUMMY_INSTRUCTOR.avatarSeed,
-    rating:      DUMMY_INSTRUCTOR.rating,        // instructor rating/students/courseCount
-    students:    DUMMY_INSTRUCTOR.students,      // eখনো User model-e track hoy na —
-    courseCount: DUMMY_INSTRUCTOR.courseCount,   // tai stat-gulo dummy thakbe DB connect na hoya porjonto
+    rating:      DUMMY_INSTRUCTOR.rating,
+    students:    DUMMY_INSTRUCTOR.students,
+    courseCount: DUMMY_INSTRUCTOR.courseCount,
   } : DUMMY_INSTRUCTOR;
 
   const whatYouGet  = detail?.whatYouGet?.length   ? detail.whatYouGet   : WHAT_YOU_GET.map((text) => ({ text }));
@@ -641,13 +650,6 @@ const CourseSingleDetails = () => {
   })) : CURRICULUM;
   const faqs        = detail?.faqs?.length          ? detail.faqs         : FAQ.map((f) => ({ question: f.q, answer: f.a }));
 
-  // Reviews — course details page er rule: REAL student reviews (jodi thake)
-  // shudhu oigulai dekhabe. Student review 0 thakle, tokhon admin-curated
-  // detail.reviews (CourseDetail document-er bhitorer 5ta review, admin
-  // "Course Details" modal theke hard-code kore add kore) fallback hisebe
-  // dekhabe. Dujon-ke ekshathe merge kora hoy na ei page-e — eta shudhu Home
-  // page-er CourseReviewsSection-e hoy (shekhane সব source merge hoy variety-r
-  // jonno). Kono review-i na thakle (notun course) REVIEWS dummy dekhay.
   const [studentReviews, setStudentReviews] = useState([]);
   useEffect(() => {
     if (!id) return;
@@ -672,18 +674,21 @@ const CourseSingleDetails = () => {
   }));
 
   const reviews = normalizedStudentReviews.length
-    ? normalizedStudentReviews          // real student reviews exist -> show ONLY these
+    ? normalizedStudentReviews
     : normalizedDetailReviews.length
-      ? normalizedDetailReviews          // no student reviews yet -> fall back to admin-curated ones
-      : REVIEWS;                          // neither exists -> dummy placeholder
-  const totalReviewCount = reviews.length; // header-e "(X reviews)" — always actual count, never a stale dummy number
+      ? normalizedDetailReviews
+      : REVIEWS;
+  const totalReviewCount = reviews.length;
   const avgRating = totalReviewCount
     ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / totalReviewCount).toFixed(1)
-    : courseData.rating;
-  const introVideo  = detail?.introVideoUrl         || courseData.introVideo || "https://www.youtube.com/embed/dQw4w9WgXcQ";
+    : (courseData?.rating ?? 4.8);
+  const introVideo = detail?.introVideoUrl || courseData?.introVideo || "https://www.youtube.com/embed/dQw4w9WgXcQ";
 
   const [coupon, setCoupon] = useState("");
   const [couponMsg, setCouponMsg] = useState(null);
+  const [couponData, setCouponData] = useState(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [finalPrice, setFinalPrice] = useState(null);
 
   const [videoModal, setVideoModal] = useState({ open: false, title: "", videoSrc: "" });
 
@@ -694,14 +699,43 @@ const CourseSingleDetails = () => {
   const openVideoModal = (title, videoSrc) => setVideoModal({ open: true, title, videoSrc });
   const closeVideoModal = () => setVideoModal((v) => ({ ...v, open: false }));
 
-  const discountPct = courseData.originalPrice > courseData.price
-    ? Math.round(((courseData.originalPrice - courseData.price) / courseData.originalPrice) * 100)
-    : 0;
-
-  const applyCoupon = (e) => {
+  const applyCoupon = async (e) => {
     e.preventDefault();
     if (!coupon.trim()) return;
-    setCouponMsg({ ok: false, text: "এই কুপন কোডটি বৈধ নয় (ডেমো — পরে DB-এর সাথে যুক্ত হবে)" });
+    setApplyingCoupon(true);
+    setCouponMsg(null);
+    try {
+      const res = await api.post("/coupons/validate", { code: coupon.trim(), courseId: id });
+      const d = res.data;
+      setCouponData(d);
+      // Calculate discounted price
+      const basePrice = courseData.price || 0;
+      let discounted = basePrice;
+      if (d.discountType === "percent") {
+        discounted = Math.round(basePrice - (basePrice * d.discountValue) / 100);
+      } else {
+        discounted = Math.max(0, basePrice - d.discountValue);
+      }
+      setFinalPrice(discounted);
+      const saving = basePrice - discounted;
+      const label = d.discountType === "percent"
+        ? d.discountValue + "% ছাড়"
+        : "৳" + d.discountValue + " ছাড়";
+      setCouponMsg({ ok: true, text: label + " প্রযোজ্য! ৳" + saving.toLocaleString() + " সাশ্রয়।" });
+    } catch (err) {
+      setCouponData(null);
+      setFinalPrice(null);
+      setCouponMsg({ ok: false, text: err.response?.data?.message || "কুপন যাচাই করা সম্ভব হয়নি।" });
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setCoupon("");
+    setCouponData(null);
+    setCouponMsg(null);
+    setFinalPrice(null);
   };
 
   const handleStudentReview = (review) => {
@@ -724,6 +758,29 @@ const CourseSingleDetails = () => {
       </PublicLayout>
     );
   }
+
+  // Course DB-তে নেই বা inactive
+  if (!courseData) {
+    return (
+      <PublicLayout>
+        <div className="min-h-[60vh] flex items-center justify-center" style={{ background: "#0a0118" }}>
+          <div className="text-center space-y-4">
+            <p className="text-6xl">😕</p>
+            <h2 className="text-white font-bold text-xl">কোর্সটি পাওয়া যায়নি</h2>
+            <p className="text-gray-400 text-sm">কোর্সটি হয়তো সরিয়ে নেওয়া হয়েছে অথবা inactive করা হয়েছে।</p>
+            <a href="/categories" className="inline-block mt-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold"
+              style={{ background: "linear-gradient(90deg,#7c3aed,#db2777)" }}>
+              সব কোর্স দেখো
+            </a>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  const discountPct = courseData.originalPrice > courseData.price
+    ? Math.round(((courseData.originalPrice - courseData.price) / courseData.originalPrice) * 100)
+    : 0;
 
   return (
     <PublicLayout>
@@ -945,30 +1002,64 @@ const CourseSingleDetails = () => {
 
               <div className="p-6">
                 <div className="flex items-baseline gap-3 mb-1">
-                  <span className="text-white font-extrabold text-3xl">৳{courseData.price?.toLocaleString()}</span>
-                  {courseData.originalPrice > courseData.price && (
-                    <span className="text-gray-500 line-through text-base">৳{courseData.originalPrice?.toLocaleString()}</span>
+                  {finalPrice !== null ? (
+                    <>
+                      <span className="text-white font-extrabold text-3xl">৳{finalPrice.toLocaleString()}</span>
+                      <span className="text-gray-500 line-through text-base">৳{courseData.price?.toLocaleString()}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-white font-extrabold text-3xl">৳{courseData.price?.toLocaleString()}</span>
+                      {courseData.originalPrice > courseData.price && (
+                        <span className="text-gray-500 line-through text-base">৳{courseData.originalPrice?.toLocaleString()}</span>
+                      )}
+                    </>
                   )}
                 </div>
-                {discountPct > 0 && (
+                {discountPct > 0 && finalPrice === null && (
                   <p className="text-green-400 text-sm font-semibold mb-5">{discountPct}% ছাড়, সীমিত সময়ের জন্য</p>
                 )}
 
                 {/* Coupon code field */}
-                <form onSubmit={applyCoupon} className="flex gap-2 mb-5">
-                  <div className="flex-1 flex items-center gap-2 bg-gray-900 border border-purple-900 rounded-xl px-3">
-                    <FiTag className="text-purple-400 shrink-0" size={14} />
-                    <input value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponMsg(null); }}
-                      placeholder="কুপন কোড থাকলে দাও"
-                      className="w-full bg-transparent text-white placeholder-gray-500 text-sm py-2.5 focus:outline-none" />
+                {!couponData ? (
+                  <form onSubmit={applyCoupon} className="flex gap-2 mb-3">
+                    <div className="flex-1 flex items-center gap-2 bg-gray-900 border border-purple-900 rounded-xl px-3 focus-within:border-cyan-500 transition-colors">
+                      <FiTag className="text-purple-400 shrink-0" size={14} />
+                      <input
+                        value={coupon}
+                        onChange={(e) => { setCoupon(e.target.value); setCouponMsg(null); }}
+                        placeholder="কুপন কোড থাকলে দাও"
+                        className="w-full bg-transparent text-white placeholder-gray-500 text-sm py-2.5 focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={applyingCoupon || !coupon.trim()}
+                      className="px-4 rounded-xl text-sm font-semibold bg-purple-700 hover:bg-purple-600 disabled:opacity-50 text-white transition-colors shrink-0"
+                    >
+                      {applyingCoupon ? "..." : "Apply"}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="flex items-center justify-between bg-green-500/10 border border-green-500/30 rounded-xl px-3 py-2.5 mb-3">
+                    <div className="flex items-center gap-2">
+                      <FiTag className="text-green-400" size={14} />
+                      <span className="text-green-400 font-mono font-bold text-sm">{couponData.code}</span>
+                      <span className="text-green-300 text-xs">
+                        {couponData.discountType === "percent"
+                          ? couponData.discountValue + "% ছাড়"
+                          : "৳" + couponData.discountValue + " ছাড়"}
+                      </span>
+                    </div>
+                    <button onClick={removeCoupon} className="text-gray-500 hover:text-red-400 transition-colors">
+                      <FiX size={14} />
+                    </button>
                   </div>
-                  <button type="submit"
-                    className="px-4 rounded-xl text-sm font-semibold bg-purple-700 hover:bg-purple-600 text-white transition-colors shrink-0">
-                    Apply
-                  </button>
-                </form>
+                )}
                 {couponMsg && (
-                  <p className={`text-xs mb-4 -mt-2 ${couponMsg.ok ? "text-green-400" : "text-red-400"}`}>{couponMsg.text}</p>
+                  <p className={`text-xs mb-3 ${couponMsg.ok ? "text-green-400" : "text-red-400"}`}>
+                    {couponMsg.text}
+                  </p>
                 )}
 
                 <button type="button"
