@@ -11,9 +11,12 @@ const DEFAULT_SECTION = {
 };
 
 // Backend's API base usually ends in "/api" — strip that to get the
-// server's actual origin, since uploaded videos are served from
-// /uploads/... (NOT under /api).
+// server's actual origin. Only needed for legacy local-disk uploads (saved
+// as a relative "/uploads/videos/..." path); Cloudinary uploads already
+// store a full absolute URL (https://res.cloudinary.com/...).
 const SERVER_ORIGIN = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
+const resolveVideoSrc = (uploadedVideoPath) =>
+  /^https?:\/\//.test(uploadedVideoPath || "") ? uploadedVideoPath : `${SERVER_ORIGIN}${uploadedVideoPath}`;
 
 // Props:
 //   categorySlug — which category's preview video to show (e.g. "mern-stack")
@@ -51,7 +54,7 @@ const CourseVideoSection = ({ categorySlug }) => {
           ) : isUpload ? (
             <video
               key={section.uploadedVideoPath}
-              src={`${SERVER_ORIGIN}${section.uploadedVideoPath}`}
+              src={resolveVideoSrc(section.uploadedVideoPath)}
               controls
               className="absolute inset-0 w-full h-full"
             />

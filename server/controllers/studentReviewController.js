@@ -3,6 +3,7 @@ const StudentCourseReview = require("../models/StudentCourseReview");
 const InstructorReview    = require("../models/InstructorReview");
 const Course              = require("../models/Course");
 const User                = require("../models/User");
+const Enrollment          = require("../models/Enrollment");
 
 // ══════════════════════════════════════════════════════════════════════════
 // COURSE REVIEWS
@@ -30,20 +31,40 @@ const getAllActiveStudentReviews = asyncHandler(async (req, res) => {
   res.json(reviews);
 });
 
-// PUBLIC — POST /api/student-reviews/course/:courseId  → submit review (pending)
+// PRIVATE (login + enrolled) — POST /api/student-reviews/course/:courseId
+// শুধু approved enrollment থাকা student-ই review দিতে পারবে — fake/anonymous
+// review বা না-কেনা কোর্সে review বসানো বন্ধ। email client থেকে trust করা
+// হয় না, req.user থেকেই নেওয়া হয় (spoof ঠেকাতে)।
 const submitCourseReview = asyncHandler(async (req, res) => {
-  const { name, email, rating, text } = req.body;
-  if (!name?.trim()) return res.status(400).json({ message: "নাম দাও" });
+  const { name, rating, text } = req.body;
   if (!text?.trim()) return res.status(400).json({ message: "Review লিখো" });
 
   const course = await Course.findById(req.params.courseId);
   if (!course || !course.isActive)
     return res.status(404).json({ message: "Course পাওয়া যায়নি" });
 
+  const enrollment = await Enrollment.findOne({
+    user: req.user._id,
+    course: req.params.courseId,
+    status: "approved",
+  });
+  if (!enrollment) {
+    return res.status(403).json({ message: "তুমি এই কোর্সে enrolled নেই, তাই review দিতে পারবে না।" });
+  }
+
+  const existing = await StudentCourseReview.findOne({
+    course: req.params.courseId,
+    user: req.user._id,
+  });
+  if (existing) {
+    return res.status(400).json({ message: "তুমি এই কোর্সে ইতোমধ্যে review দিয়েছো।" });
+  }
+
   const review = await StudentCourseReview.create({
     course: req.params.courseId,
-    name:   name.trim(),
-    email:  email?.trim() || "",
+    user:   req.user._id,
+    name:   name?.trim() || req.user.name,
+    email:  req.user.email,
     rating: Number(rating) || 5,
     text:   text.trim(),
     status:   "pending",

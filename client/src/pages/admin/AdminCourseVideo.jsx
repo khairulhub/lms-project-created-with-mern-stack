@@ -7,8 +7,14 @@ import { FiSave, FiUploadCloud, FiTrash2, FiYoutube, FiFilm } from "react-icons/
 const inputClass = "w-full bg-gray-800 border border-gray-700 text-white placeholder-gray-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 transition-colors";
 const labelClass = "block text-xs font-medium text-gray-400 mb-1";
 
-const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB — must match server/config/upload.js
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB — must match server/config/upload.js (Cloudinary free-tier video cap)
 const SERVER_ORIGIN = (api.defaults.baseURL || "").replace(/\/api\/?$/, "");
+
+// Cloudinary uploads store a full absolute URL already (https://res.cloudinary.com/...).
+// Only pre-migration uploads (saved as a relative "/uploads/videos/..." path)
+// need the server origin prefixed.
+const resolveVideoSrc = (uploadedVideoPath) =>
+  /^https?:\/\//.test(uploadedVideoPath || "") ? uploadedVideoPath : `${SERVER_ORIGIN}${uploadedVideoPath}`;
 
 const formatBytes = (bytes) => {
   if (!bytes) return "0 MB";
@@ -212,11 +218,11 @@ const AdminCourseVideo = () => {
 
             {/* ── File upload ── */}
             <div className="border-t border-gray-800 pt-5">
-              <label className={labelClass}>Upload Video File (max 200MB — mp4, webm, mov, mkv)</label>
+              <label className={labelClass}>Upload Video File (max 100MB — mp4, webm, mov, mkv)</label>
 
               {section?.uploadedVideoPath && (
                 <div className="mb-3 rounded-xl overflow-hidden border border-gray-800" style={{ aspectRatio: "16/9", maxWidth: 480 }}>
-                  <video src={`${SERVER_ORIGIN}${section.uploadedVideoPath}`} controls className="w-full h-full" />
+                  <video src={resolveVideoSrc(section.uploadedVideoPath)} controls className="w-full h-full" />
                 </div>
               )}
 

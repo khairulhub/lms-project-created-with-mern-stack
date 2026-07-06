@@ -20,6 +20,14 @@ const courseSchema = new mongoose.Schema(
     isActive:      { type: Boolean, default: true },
     order:         { type: Number, default: 0 },
     createdBy:     { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    // "pending"  → instructor create korsche, admin approve koreni
+    // "approved" → admin approve korsche, public-e dekhabe (isActive: true)
+    // "rejected" → admin reject korsche
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "approved", // admin nijey create korle auto-approved
+    },
   },
   { timestamps: true }
 );

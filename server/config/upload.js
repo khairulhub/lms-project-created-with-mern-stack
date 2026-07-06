@@ -1,22 +1,25 @@
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("./cloudinary");
 
-// Where uploaded course-preview videos are stored on disk. Served back out
-// statically at /uploads/videos/<filename> (see index.js static middleware).
-const VIDEO_DIR = path.join(__dirname, "..", "uploads", "videos");
-if (!fs.existsSync(VIDEO_DIR)) fs.mkdirSync(VIDEO_DIR, { recursive: true });
+// Cloudinary free-tier hard caps out unsigned/free-plan video uploads at
+// 100MB per file — keeping our own limit at-or-below that so multer rejects
+// an oversized file with our own friendly message instead of Cloudinary
+// erroring out mid-upload.
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB
 
-const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB hard limit
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, VIDEO_DIR),
-  filename: (req, file, cb) => {
-    // Unique, collision-safe name: <timestamp>-<random>-<original ext>
-    const ext = path.extname(file.originalname).toLowerCase();
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, unique);
-  },
+// Videos are streamed straight to Cloudinary (resource_type: "video") —
+// nothing touches the server's local disk, so files survive redeploys on
+// ephemeral filesystems (Render/Railway/etc wipe local disk on every deploy).
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: (req, file) => ({
+    folder: "lms/course-videos",
+    resource_type: "video",
+    // Cloudinary auto-generates a public_id if omitted; we add a readable
+    // prefix + timestamp so files are easy to spot in the Cloudinary console.
+    public_id: `${Date.now()}-${Math.round(Math.random() * 1e9)}`,
+  }),
 });
 
 const ALLOWED_MIME = [
@@ -34,4 +37,4 @@ const uploadVideo = multer({
   fileFilter,
 });
 
-module.exports = { uploadVideo, VIDEO_DIR, MAX_VIDEO_SIZE };
+module.exports = { uploadVideo, MAX_VIDEO_SIZE };

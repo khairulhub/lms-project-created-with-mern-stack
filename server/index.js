@@ -25,8 +25,9 @@ const start = async () => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Serve uploaded course-preview videos (and any other uploaded files)
-  // statically, e.g. GET /uploads/videos/169...-clip.mp4
+  // Legacy static serving — new video uploads now go straight to Cloudinary
+  // (see config/upload.js), so nothing new gets saved here. Kept only so any
+  // file uploaded before the Cloudinary migration is still reachable.
   app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
   app.use("/api", routes);
@@ -39,12 +40,15 @@ const start = async () => {
   app.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
       if (err.code === "LIMIT_FILE_SIZE") {
-        return res.status(400).json({ message: "Video file 200MB-er beshi boro. Choto file upload koro." });
+        return res.status(400).json({ message: "Video file 100MB-er beshi boro. Choto file upload koro." });
       }
       return res.status(400).json({ message: err.message });
     }
     if (err && err.message && err.message.includes("Unsupported video format")) {
       return res.status(400).json({ message: err.message });
+    }
+    if (err && /cloudinary|cloud_name|Invalid Signature|Must supply api_key/i.test(err.message || "")) {
+      return res.status(500).json({ message: "Video upload service set up hoyni thik moto। .env-e CLOUDINARY_* values check koro." });
     }
     next(err);
   });

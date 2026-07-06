@@ -1,9 +1,8 @@
 const asyncHandler = require("express-async-handler");
-const fs = require("fs");
-const path = require("path");
 const mongoose = require("mongoose");
 const CourseVideoSection = require("../models/CourseVideoSection");
 const Category = require("../models/Category");
+const cloudinary = require("../config/cloudinary");
 
 const resolveCategory = async (slugOrId) => {
   let cat = null;
@@ -12,13 +11,12 @@ const resolveCategory = async (slugOrId) => {
   return cat;
 };
 
-// Delete the old uploaded video file from disk (best-effort — never throws,
-// just logs, so a missing/already-deleted file never blocks the request).
-const deleteOldVideoFile = (relativePath) => {
-  if (!relativePath) return;
-  const absPath = path.join(__dirname, "..", relativePath.replace(/^\/+/, ""));
-  fs.unlink(absPath, (err) => {
-    if (err && err.code !== "ENOENT") console.error("Could not delete old video file:", err.message);
+// Delete the old uploaded video from Cloudinary (best-effort — never throws,
+// just logs, so an already-deleted/missing asset never blocks the request).
+const deleteOldVideoAsset = (publicId) => {
+  if (!publicId) return;
+  cloudinary.uploader.destroy(publicId, { resource_type: "video" }, (err) => {
+    if (err) console.error("Could not delete old Cloudinary video:", err.message);
   });
 };
 
@@ -64,8 +62,9 @@ const updateCourseVideo = asyncHandler(async (req, res) => {
 });
 
 // POST /api/admin/course-video/:categoryId/upload — admin uploads a video file
-// (multer middleware on the route already validated size/mimetype by the
-// time this handler runs; req.file holds the saved file's info)
+// (multer-storage-cloudinary middleware on the route already streamed the
+// file straight to Cloudinary and validated size/mimetype by the time this
+// handler runs; req.file holds the Cloudinary response)
 const uploadCourseVideo = asyncHandler(async (req, res) => {
   const cat = await resolveCategory(req.params.categoryId);
   if (!cat) return res.status(404).json({ message: "Category not found" });
@@ -74,11 +73,14 @@ const uploadCourseVideo = asyncHandler(async (req, res) => {
   let section = await CourseVideoSection.findOne({ category: cat._id });
   if (!section) section = await CourseVideoSection.create({ category: cat._id });
 
-  // Clean up the previous uploaded file (if any) before pointing to the new one
-  if (section.uploadedVideoPath) deleteOldVideoFile(section.uploadedVideoPath);
+  // Clean up the previous Cloudinary asset (if any) before pointing to the new one
+  if (section.uploadedVideoPublicId) deleteOldVideoAsset(section.uploadedVideoPublicId);
 
   section.videoType = "upload";
-  section.uploadedVideoPath = `/uploads/videos/${req.file.filename}`;
+  // req.file.path = full Cloudinary URL (https://res.cloudinary.com/...)
+  // req.file.filename = Cloudinary public_id, needed later to delete the asset
+  section.uploadedVideoPath = req.file.path;
+  section.uploadedVideoPublicId = req.file.filename;
   section.uploadedVideoName = req.file.originalname;
   section.uploadedVideoSize = req.file.size;
 
@@ -95,9 +97,10 @@ const deleteCourseVideoUpload = asyncHandler(async (req, res) => {
   const section = await CourseVideoSection.findOne({ category: cat._id });
   if (!section) return res.status(404).json({ message: "Video section not found" });
 
-  if (section.uploadedVideoPath) deleteOldVideoFile(section.uploadedVideoPath);
+  if (section.uploadedVideoPublicId) deleteOldVideoAsset(section.uploadedVideoPublicId);
 
   section.uploadedVideoPath = "";
+  section.uploadedVideoPublicId = "";
   section.uploadedVideoName = "";
   section.uploadedVideoSize = 0;
   section.videoType = "youtube";

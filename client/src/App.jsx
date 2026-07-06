@@ -11,6 +11,7 @@ import Blogs from "./pages/public/Blogs";
 import BlogDetail from "./pages/public/BlogDetail";
 import Categories from "./pages/public/Categories";
 import CourseSingleDetails from "./pages/public/CourseSingleDetails";
+import VerifyCertificate from "./pages/public/VerifyCertificate";
 
 // Student pages
 import StudentDashboard from "./pages/student/StudentDashboard";
@@ -24,6 +25,9 @@ import Announcement from "./pages/student/Announcement";
 import ConceptualSession from "./pages/student/ConceptualSession";
 import StudentSettings from "./pages/student/StudentSettings";
 import StudentProfile from "./pages/student/StudentProfile";
+import StudentCertificates from "./pages/student/StudentCertificates";
+import CourseLeaderboard from "./pages/student/CourseLeaderboard";
+import StudentCourseView from "./pages/student/StudentCourseView";
 
 // User (old)
 import UserProfile from "./pages/user/UserProfile";
@@ -33,6 +37,7 @@ import InstructorRequestPage from "./pages/user/InstructorRequestPage";
 import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import InstructorBlogs from "./pages/instructor/InstructorBlogs";
 import InstructorProfile from "./pages/instructor/InstructorProfile";
+import InstructorCourses from "./pages/instructor/InstructorCourses";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -51,12 +56,17 @@ import AdminCourseCurriculum from "./pages/admin/AdminCourseCurriculum";
 import AdminCourseProjects from "./pages/admin/AdminCourseProjects";
 import AdminCourseCareer from "./pages/admin/AdminCourseCareer";
 import AdminCourseReviews from "./pages/admin/AdminCourseReviews";
+import AdminQuizAssignment from "./pages/admin/AdminQuizAssignment";
 import AdminCourseFAQ from "./pages/admin/AdminCourseFAQ";
 import AdminCourseCTA from "./pages/admin/AdminCourseCTA";
 import AdminCourses from "./pages/admin/AdminCourses";
 import AdminStudentCourseReviews from "./pages/admin/AdminStudentCourseReviews";
 import AdminInstructorReviews from "./pages/admin/AdminInstructorReviews";
 import AdminCoupons from "./pages/admin/AdminCoupons";
+
+import AdminEnrollments from "./pages/admin/AdminEnrollments";
+
+
 
 
 function App() {
@@ -82,10 +92,12 @@ function App() {
           <Route path="/blogs/:slug" element={<BlogDetail />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/courses/:id" element={<CourseSingleDetails />} />
+          <Route path="/verify-certificate/:certificateId" element={<VerifyCertificate />} />
 
           {/* ── STUDENT (any logged-in user) ─────────── */}
           <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
           <Route path="/student/enrolled" element={<ProtectedRoute><EnrolledCourses /></ProtectedRoute>} />
+          <Route path="/student/course/:courseId" element={<ProtectedRoute><StudentCourseView /></ProtectedRoute>} />
           <Route path="/student/my-classes" element={<ProtectedRoute><MyClasses /></ProtectedRoute>} />
           <Route path="/student/bookmark" element={<ProtectedRoute><Bookmark /></ProtectedRoute>} />
           <Route path="/student/helpdesk" element={<ProtectedRoute><Helpdesk /></ProtectedRoute>} />
@@ -95,6 +107,8 @@ function App() {
           <Route path="/student/conceptual-session" element={<ProtectedRoute><ConceptualSession /></ProtectedRoute>} />
           <Route path="/student/settings" element={<ProtectedRoute><StudentSettings /></ProtectedRoute>} />
           <Route path="/student/profile" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+          <Route path="/student/certificates" element={<ProtectedRoute><StudentCertificates /></ProtectedRoute>} />
+          <Route path="/student/course/:courseId/leaderboard" element={<ProtectedRoute><CourseLeaderboard /></ProtectedRoute>} />
 
           {/* ── USER (misc) ──────────────────────────── */}
           <Route path="/user/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
@@ -102,8 +116,9 @@ function App() {
 
           {/* ── INSTRUCTOR ───────────────────────────── */}
           <Route path="/instructor/dashboard" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorDashboard /></ProtectedRoute>} />
-          <Route path="/instructor/blogs" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorBlogs /></ProtectedRoute>} />
-          <Route path="/instructor/profile" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorProfile /></ProtectedRoute>} />
+          <Route path="/instructor/blogs"     element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorBlogs /></ProtectedRoute>} />
+          <Route path="/instructor/profile"   element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorProfile /></ProtectedRoute>} />
+          <Route path="/instructor/courses"   element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorCourses /></ProtectedRoute>} />
 
           {/* ── ADMIN ────────────────────────────────── */}
           <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
@@ -131,6 +146,12 @@ function App() {
           {/* ── ADMIN REVIEWS ────────────────────────────── */}
           <Route path="/admin/reviews/course-reviews"     element={<ProtectedRoute allowedRoles={["admin"]}><AdminStudentCourseReviews /></ProtectedRoute>} />
           <Route path="/admin/reviews/instructor-reviews" element={<ProtectedRoute allowedRoles={["admin"]}><AdminInstructorReviews /></ProtectedRoute>} />
+
+
+          <Route path="/admin/enrollments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEnrollments /></ProtectedRoute>} />
+          <Route path="/admin/quiz-assignment" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQuizAssignment /></ProtectedRoute>} />
+
+          
 
           {/* ── 404 ──────────────────────────────────── */}
           <Route path="*" element={

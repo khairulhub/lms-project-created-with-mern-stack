@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
-import { FiPlus, FiEdit2, FiTrash2, FiX, FiSave, FiList, FiGrid, FiImage, FiBookOpen } from "react-icons/fi";
+import { FiPlus, FiEdit2, FiTrash2, FiX, FiSave, FiList, FiGrid, FiImage, FiBookOpen, FiTrendingUp, FiFileText } from "react-icons/fi";
 import IconPicker from "../../components/common/IconPicker";
+import AdminCourseStatsModal from "./AdminCourseStatsModal";
 import AdminCourseDetailModal from "./AdminCourseDetailModal";
 
 const IMGBB_API_KEY = import.meta.env.VITE_IMGBB_API_KEY;
@@ -18,38 +19,51 @@ const EMPTY_FORM = {
 };
 
 const AdminCourses = () => {
-  const [categories,  setCategories]  = useState([]);
-  const [courses,     setCourses]     = useState([]);
-  const [activeCatId, setActiveCatId] = useState("");
-  const [loading,     setLoading]     = useState(true);
-  const [modal,       setModal]       = useState(false);
-  const [editCourse,  setEditCourse]  = useState(null);
-  const [form,        setForm]        = useState(EMPTY_FORM);
-  const [saving,      setSaving]      = useState(false);
+  const [categories,    setCategories]    = useState([]);
+  const [courses,       setCourses]       = useState([]);
+  const [activeCatId,   setActiveCatId]   = useState("");
+  const [approvalFilter, setApprovalFilter] = useState(""); // "" = all, "pending", "approved", "rejected"
+  const [pendingCount,  setPendingCount]  = useState(0);
+  const [loading,       setLoading]       = useState(true);
+  const [modal,         setModal]         = useState(false);
+  const [editCourse,    setEditCourse]    = useState(null);
+  const [form,          setForm]          = useState(EMPTY_FORM);
+  const [saving,        setSaving]        = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [detailCourse, setDetailCourse] = useState(null); // course for detail modal
+  const [statsModal,    setStatsModal]    = useState(null);
+  const [detailCourse,  setDetailCourse]  = useState(null);
 
-  // load categories
+  // load categories + global pending count
   useEffect(() => {
     api.get("/admin/categories").then((r) => {
       setCategories(r.data);
-      if (r.data.length > 0) setActiveCatId(r.data[0]._id);
+      setActiveCatId("all"); // default: show ALL courses (incl. instructor-submitted)
     });
+    api.get("/admin/courses?approval=pending")
+      .then((r) => setPendingCount(r.data.length))
+      .catch(() => {});
   }, []);
 
-  // load courses when category changes
+  // load courses when category or filter changes
   useEffect(() => {
-    if (!activeCatId) return;
     setLoading(true);
-    api.get(`/admin/courses?category=${activeCatId}`)
+    const catQ      = activeCatId && activeCatId !== "all" ? `category=${activeCatId}` : "";
+    const approvalQ = approvalFilter ? `approval=${approvalFilter}` : "";
+    const qs        = [catQ, approvalQ].filter(Boolean).join("&");
+    api.get(`/admin/courses${qs ? "?" + qs : ""}`)
       .then((r) => setCourses(r.data))
       .catch(() => setCourses([]))
       .finally(() => setLoading(false));
-  }, [activeCatId]);
+  }, [activeCatId, approvalFilter]);
 
   const fetchCourses = () => {
-    if (!activeCatId) return;
-    api.get(`/admin/courses?category=${activeCatId}`).then((r) => setCourses(r.data));
+    const catQ      = activeCatId && activeCatId !== "all" ? `category=${activeCatId}` : "";
+    const approvalQ = approvalFilter ? `approval=${approvalFilter}` : "";
+    const qs        = [catQ, approvalQ].filter(Boolean).join("&");
+    api.get(`/admin/courses${qs ? "?" + qs : ""}`).then((r) => {
+      setCourses(r.data);
+      api.get("/admin/courses?approval=pending").then((r2) => setPendingCount(r2.data.length)).catch(() => {});
+    });
   };
 
   const openCreate = () => {
@@ -107,6 +121,17 @@ const AdminCourses = () => {
     catch { toast.error("Delete failed"); }
   };
 
+  const handleApprove = async (id) => {
+    try { await api.put(`/admin/courses/${id}/approve`); toast.success("Course approved!"); fetchCourses(); }
+    catch { toast.error("Approve failed"); }
+  };
+
+  const handleReject = async (id) => {
+    if (!window.confirm("এই course টা reject করবে?")) return;
+    try { await api.put(`/admin/courses/${id}/reject`); toast.success("Course rejected"); fetchCourses(); }
+    catch { toast.error("Reject failed"); }
+  };
+
   // imgBB course image upload (same pattern as AdminCourseHeroSection instructor image)
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -146,6 +171,7 @@ const AdminCourses = () => {
   const currentStyle = courses[0]?.displayStyle || "list";
 
   return (
+    <>
     <DashboardLayout>
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white">Courses</h2>
@@ -153,13 +179,44 @@ const AdminCourses = () => {
       </div>
 
       {/* Category tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+        <button onClick={() => setActiveCatId("all")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+            activeCatId === "all" ? "bg-cyan-500 text-gray-950" : "bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700"
+          }`}>
+          🗂 সব Course
+        </button>
         {categories.map((cat) => (
           <button key={cat._id} onClick={() => setActiveCatId(cat._id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
               activeCatId === cat._id ? "bg-cyan-500 text-gray-950" : "bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700"
             }`}>
             {cat.icon} {cat.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Approval filter tabs */}
+      <div className="flex gap-2 mb-6">
+        {[
+          { value: "",         label: "সব"      },
+          { value: "pending",  label: "Pending", count: pendingCount },
+          { value: "approved", label: "Approved" },
+          { value: "rejected", label: "Rejected" },
+        ].map((f) => (
+          <button key={f.value} onClick={() => setApprovalFilter(f.value)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              approvalFilter === f.value
+                ? f.value === "pending"  ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40"
+                : f.value === "rejected" ? "bg-red-500/20 text-red-300 border border-red-500/40"
+                : f.value === "approved" ? "bg-green-500/20 text-green-300 border border-green-500/40"
+                : "bg-gray-700 text-white border border-gray-600"
+                : "text-gray-400 hover:text-white border border-transparent hover:border-gray-700"
+            }`}>
+            {f.label}
+            {f.count > 0 && (
+              <span className="bg-yellow-500 text-gray-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{f.count}</span>
+            )}
           </button>
         ))}
       </div>
@@ -192,7 +249,12 @@ const AdminCourses = () => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-white font-semibold text-lg">{activeCat?.name} — Courses</h3>
-          <p className="text-gray-400 text-sm">{courses.length} total · {courses.filter(c => c.isActive).length} active</p>
+          <p className="text-gray-400 text-sm">
+            {courses.length} total · {courses.filter(c => c.isActive).length} active
+            {courses.filter(c => c.approvalStatus === "pending").length > 0 && (
+              <span className="ml-2 text-yellow-400">· {courses.filter(c => c.approvalStatus === "pending").length} pending approval</span>
+            )}
+          </p>
         </div>
         <button onClick={openCreate}
           className="flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">
@@ -211,7 +273,9 @@ const AdminCourses = () => {
         <div className="space-y-3">
           {courses.map((c) => (
             <div key={c._id}
-              className={`bg-gray-900 border border-gray-800 rounded-xl px-5 py-4 flex items-center gap-4 transition-opacity ${!c.isActive ? "opacity-50" : ""}`}>
+              className={`bg-gray-900 border rounded-xl px-5 py-4 flex items-center gap-4 transition-opacity
+                ${c.approvalStatus === "pending" ? "border-yellow-500/40" : "border-gray-800"}
+                ${!c.isActive && c.approvalStatus !== "pending" ? "opacity-50" : ""}`}>
               {c.image ? (
                 <img src={c.image} alt={c.title} className="w-12 h-12 object-cover rounded-lg shrink-0 border border-gray-700" />
               ) : (
@@ -221,6 +285,15 @@ const AdminCourses = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-white font-semibold text-sm">{c.title}</p>
                   {c.badge && <span className="text-xs bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full">{c.badge}</span>}
+                  {c.approvalStatus === "pending" && (
+                    <span className="text-xs bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-full">⏳ Pending Approval</span>
+                  )}
+                  {c.approvalStatus === "rejected" && (
+                    <span className="text-xs bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full">✗ Rejected</span>
+                  )}
+                  {c.createdBy?.name && c.createdBy?.role !== "admin" && (
+                    <span className="text-xs text-gray-500">by {c.createdBy.name}</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
                   <span>⭐ {c.rating}</span>
@@ -231,10 +304,28 @@ const AdminCourses = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => toggleActive(c)}
-                  className={`text-xs px-2.5 py-1 rounded-full transition-colors ${c.isActive ? "text-green-400 bg-green-500/10 hover:bg-green-500/20" : "text-gray-500 bg-gray-700 hover:bg-gray-600"}`}>
-                  {c.isActive ? "Active" : "Inactive"}
-                </button>
+                {/* Pending course: approve / reject buttons */}
+                {c.approvalStatus === "pending" && (
+                  <>
+                    <button onClick={() => handleApprove(c._id)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/30 font-semibold transition-colors">
+                      ✓ Approve
+                    </button>
+                    <button onClick={() => handleReject(c._id)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30 font-semibold transition-colors">
+                      ✗ Reject
+                    </button>
+                  </>
+                )}
+                {c.approvalStatus === "approved" && (
+                  <button onClick={() => toggleActive(c)}
+                    className={`text-xs px-2.5 py-1 rounded-full transition-colors ${c.isActive ? "text-green-400 bg-green-500/10 hover:bg-green-500/20" : "text-gray-500 bg-gray-700 hover:bg-gray-600"}`}>
+                    {c.isActive ? "Active" : "Inactive"}
+                  </button>
+                )}
+                <button onClick={() => setStatsModal(c)}
+                  title="Sales & review stats"
+                  className="p-1.5 text-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-colors"><FiTrendingUp size={14} /></button>
                 <button onClick={() => setDetailCourse(c)}
                   title="Course Details manage koro"
                   className="p-1.5 text-gray-400 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"><FiBookOpen size={14} /></button>
@@ -373,6 +464,8 @@ const AdminCourses = () => {
         </div>
       )}
     </DashboardLayout>
+    {statsModal && <AdminCourseStatsModal course={statsModal} onClose={() => setStatsModal(null)} />}
+    </>
   );
 };
 

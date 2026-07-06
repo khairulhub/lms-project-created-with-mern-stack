@@ -3,10 +3,10 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   FiHome, FiUser, FiUsers, FiFileText, FiTag, FiLogOut,
-  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare,
+  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare, FiAward,
 } from "react-icons/fi";
 
-const DashboardLayout = ({ children }) => {
+const DashboardLayout = ({ children, hidePadding = false }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -19,6 +19,7 @@ const DashboardLayout = ({ children }) => {
     "Course Details": location.pathname.startsWith("/admin/course-details"),
     "Categories": location.pathname.startsWith("/admin/categories") || location.pathname.startsWith("/admin/courses"),
     "Reviews": location.pathname.startsWith("/admin/reviews"),
+    "My Profile": location.pathname.startsWith("/student/profile") || location.pathname.startsWith("/student/certificates"),
   });
 
   const toggleGroup = (label) => {
@@ -42,6 +43,8 @@ const DashboardLayout = ({ children }) => {
     },
     { to: "/admin/blogs", icon: <FiFileText />, label: "Blogs" },
     { to: "/admin/coupons", icon: <FiTag />, label: "Coupons" },
+    { to: "/admin/enrollments", icon: <FiCheckCircle />, label: "Enrollments" },
+    { to: "/admin/quiz-assignment", icon: <FiAward />, label: "Quiz & Assignment" },
     {
       label: "Reviews",
       icon: <FiMessageSquare />,
@@ -73,17 +76,26 @@ const DashboardLayout = ({ children }) => {
   ];
 
   const instructorLinks = [
-    { to: "/instructor/dashboard", icon: <FiHome />, label: "Dashboard" },
-    { to: "/instructor/blogs", icon: <FiFileText />, label: "My Blogs" },
-    { to: "/instructor/profile", icon: <FiUser />, label: "My Profile" },
+    { to: "/instructor/dashboard", icon: <FiHome />,      label: "Dashboard"  },
+    { to: "/instructor/courses",   icon: <FiBookOpen />,  label: "My Courses" },
+    { to: "/instructor/blogs",     icon: <FiFileText />,  label: "My Blogs"   },
+    { to: "/instructor/profile",   icon: <FiUser />,      label: "My Profile" },
   ];
 
   const userLinks = [
     { to: "/student/dashboard", icon: <FiHome />, label: "Dashboard" },
     { to: "/student/my-classes", icon: <FiFileText />, label: "My Classes" },
     { to: "/student/bookmark", icon: <FiTag />, label: "Bookmark" },
-    { to: "/student/profile", icon: <FiUser />, label: "My Profile" },
+    {
+      label: "My Profile",
+      icon: <FiUser />,
+      children: [
+        { to: "/student/profile", label: "Profile" },
+        { to: "/student/certificates", label: "Certificates" },
+      ],
+    },
     { to: "/user/instructor-request", icon: <FiCheckCircle />, label: "Become Instructor" },
+    { to: "/student/enrolled", icon: <FiBookOpen />, label: "আমার কোর্সসমূহ" },
   ];
 
   const links =
@@ -223,7 +235,7 @@ const DashboardLayout = ({ children }) => {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <main className={`flex-1 overflow-y-auto ${hidePadding ? "flex flex-col" : "p-4 md:p-8"}`}>
           {children}
         </main>
       </div>

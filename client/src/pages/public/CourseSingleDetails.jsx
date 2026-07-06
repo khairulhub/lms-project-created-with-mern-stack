@@ -3,12 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import PublicLayout from "../../components/layout/PublicLayout";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   FiStar, FiUsers, FiClock, FiCheck, FiChevronDown, FiChevronUp,
   FiChevronLeft, FiChevronRight, FiPlay, FiShield, FiAward, FiSmartphone,
   FiThumbsUp, FiTag, FiRepeat, FiGlobe, FiShoppingCart, FiSend,
   FiVideo, FiPlayCircle, FiX,
 } from "react-icons/fi";
+import CoursePaymentSection from "./CoursePaymentSection";
 
 // ════════════════════════════════════════════════════════════════════════
 // STATIC / DUMMY DATA — design-only stage.
@@ -512,8 +514,16 @@ const ReviewSlider = ({ reviews }) => {
 };
 
 // ── Review submission form (shared shape — used for both student → course,
-// and student → instructor review boxes below) ──────────────────────────
+// and student → instructor review boxes below).
+//
+// Course review = enrollment-gated: শুধু approved enrollment থাকা logged-in
+// student-ই review দিতে পারবে (fake review বন্ধ করার জন্য), name/email
+// account থেকেই lock করা — client থেকে spoof করা যায় না, backend ছাড়াও।
+// Instructor review = এখনো open (যেকেউ instructor সম্পর্কে মতামত দিতে পারে,
+// কোর্স কেনার দরকার নেই), তাই courseId না থাকলে আগের মতই কাজ করবে।
 const ReviewForm = ({ heading, placeholder, onSubmit, courseId, instructorId }) => {
+  const { user } = useAuth();
+
   const [rating,   setRating]   = useState(5);
   const [name,     setName]     = useState("");
   const [email,    setEmail]    = useState("");
@@ -521,12 +531,31 @@ const ReviewForm = ({ heading, placeholder, onSubmit, courseId, instructorId }) 
   const [sent,     setSent]     = useState(false);
   const [sending,  setSending]  = useState(false);
 
+  // courseId দেওয়া থাকলেই enrollment-gated — eligibility check করো
+  const [eligibility, setEligibility] = useState(courseId ? "checking" : "open"); // checking | eligible | not_logged_in | not_enrolled
+
+  useEffect(() => {
+    if (!courseId) return;
+    if (!user) {
+      setEligibility("not_logged_in");
+      return;
+    }
+    setName(user.name || "");
+    setEmail(user.email || "");
+    api.get(`/enrollments/check/${courseId}`)
+      .then((res) => setEligibility(res.data.status === "approved" ? "eligible" : "not_enrolled"))
+      .catch(() => setEligibility("not_enrolled"));
+  }, [courseId, user]);
+
   const submit = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
     setSending(true);
     try {
-      const payload = { name: name.trim() || "Anonymous", email: email.trim(), rating, text: text.trim() };
+      const payload = courseId
+        ? { name: name.trim() || user?.name, rating, text: text.trim() } // email server-side থেকেই নেওয়া হবে
+        : { name: name.trim() || "Anonymous", email: email.trim(), rating, text: text.trim() };
+
       if (courseId) {
         await api.post(`/student-reviews/course/${courseId}`, payload);
       } else if (instructorId) {
@@ -535,7 +564,7 @@ const ReviewForm = ({ heading, placeholder, onSubmit, courseId, instructorId }) 
         onSubmit?.(payload);
       }
       setSent(true);
-      setName(""); setEmail(""); setText(""); setRating(5);
+      setText(""); setRating(5);
       setTimeout(() => setSent(false), 4000);
     } catch (err) {
       toast.error(err.response?.data?.message || "Submit failed");
@@ -545,6 +574,35 @@ const ReviewForm = ({ heading, placeholder, onSubmit, courseId, instructorId }) 
   };
 
   const inputClass = "w-full bg-gray-900 border border-purple-900 text-white placeholder-gray-500 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 transition-colors";
+
+  // ── Course review: এখনো জানা যাচ্ছে enrolled কিনা ───────────────────
+  if (courseId && eligibility === "checking") {
+    return null; // flash এড়াতে কিছু না দেখাই, চেক শেষ হলেই নিচের কোনো একটা state দেখাবে
+  }
+
+  // ── Course review: login করা নেই ───────────────────────────────────
+  if (courseId && eligibility === "not_logged_in") {
+    return (
+      <div className="rounded-2xl p-5 border border-purple-800 text-center"
+        style={{ background: "linear-gradient(135deg, #1a0533, #0d011f)" }}>
+        <p className="text-gray-300 text-sm mb-3">রিভিউ দিতে হলে আগে লগইন করো।</p>
+        <Link to="/login" className="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold px-5 py-2.5 rounded-xl text-sm transition-colors">
+          লগইন করো
+        </Link>
+      </div>
+    );
+  }
+
+  // ── Course review: enrolled না (অথবা enrollment এখনো approve হয়নি) ──
+  if (courseId && eligibility === "not_enrolled") {
+    return (
+      <div className="rounded-2xl p-5 border border-purple-800 text-center"
+        style={{ background: "linear-gradient(135deg, #1a0533, #0d011f)" }}>
+        <p className="text-gray-300 text-sm">কোর্সে enrolled student-রাই review দিতে পারবে।</p>
+        <p className="text-gray-500 text-xs mt-1">এনরোল করা থাকলে এবং admin approve করলে এখানে review লেখার ফর্ম দেখাবে।</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={submit}
@@ -566,12 +624,22 @@ const ReviewForm = ({ heading, placeholder, onSubmit, courseId, instructorId }) 
             <label className="block text-xs text-gray-400 mb-1.5">তোমার রেটিং</label>
             <Stars rating={rating} large onRate={setRating} />
           </div>
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <input value={name} onChange={(e) => setName(e.target.value)}
-              placeholder="তোমার নাম *" className={inputClass} />
-            <input value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email (ঐচ্ছিক)" className={inputClass} type="email" />
-          </div>
+          {courseId ? (
+            // Course review হলে নাম/ইমেইল account থেকেই lock — spoof ঠেকাতে
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <input value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="তোমার নাম *" className={inputClass} />
+              <input value={email} disabled
+                className={inputClass + " opacity-60 cursor-not-allowed"} type="email" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <input value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="তোমার নাম *" className={inputClass} />
+              <input value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email (ঐচ্ছিক)" className={inputClass} type="email" />
+            </div>
+          )}
           <div className="mb-4">
             <textarea rows={3} value={text} onChange={(e) => setText(e.target.value)}
               placeholder={placeholder} className={inputClass + " resize-none"} />
@@ -642,13 +710,25 @@ const CourseSingleDetails = () => {
     courseCount: DUMMY_INSTRUCTOR.courseCount,
   } : DUMMY_INSTRUCTOR;
 
-  const whatYouGet  = detail?.whatYouGet?.length   ? detail.whatYouGet   : WHAT_YOU_GET.map((text) => ({ text }));
-  const requirements= detail?.requirements?.length  ? detail.requirements : REQUIREMENTS.map((text) => ({ text }));
-  const curriculum  = detail?.curriculum?.length    ? detail.curriculum.map((s) => ({
-    title:    s.title,
-    lectures: (s.lectures || []).map((l) => ({ title: l.title, duration: l.duration, preview: l.preview, videoUrl: l.videoUrl })),
-  })) : CURRICULUM;
-  const faqs        = detail?.faqs?.length          ? detail.faqs         : FAQ.map((f) => ({ question: f.q, answer: f.a }));
+  // detail null mane CourseDetail document DB-te nei — instructor/admin ekhono
+  // content fill koreni. Sei case-e DUMMY data dekhano theke birot thaka
+  // better — section gulo hide hobe. Only dummy = false sob jaygay.
+  const hasDetail   = detail !== null && detail !== undefined;
+  const whatYouGet  = detail?.whatYouGet?.filter(i => i.isActive)  || [];
+  const requirements= detail?.requirements?.filter(i => i.isActive) || [];
+  const curriculum  = hasDetail && detail.curriculum?.length
+    ? detail.curriculum
+        .filter((s) => s.isActive)
+        .sort((a,b) => a.order - b.order)
+        .map((s) => ({
+          title:    s.title,
+          lectures: (s.lectures || [])
+            .filter((l) => l.isActive)
+            .sort((a,b) => a.order - b.order)
+            .map((l) => ({ title: l.title, duration: l.duration, preview: l.preview, videoUrl: l.videoUrl })),
+        }))
+    : [];
+  const faqs = detail?.faqs?.filter(i => i.isActive) || [];
 
   const [studentReviews, setStudentReviews] = useState([]);
   useEffect(() => {
@@ -688,7 +768,7 @@ const CourseSingleDetails = () => {
   const [couponMsg, setCouponMsg] = useState(null);
   const [couponData, setCouponData] = useState(null);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
-  const [finalPrice, setFinalPrice] = useState(null);
+  const [finalPrice,  setFinalPrice]  = useState(null); // null = no coupon; EnrollmentModal falls back to course.price
 
   const [videoModal, setVideoModal] = useState({ open: false, title: "", videoSrc: "" });
 
@@ -864,7 +944,8 @@ const CourseSingleDetails = () => {
           {/* Left — main content */}
           <div className="lg:col-span-2 space-y-12">
 
-            {/* What you'll get */}
+            {/* What you'll get — only if content exists */}
+            {whatYouGet.length > 0 && (
             <div>
               <h2 className="text-xl font-bold text-white mb-5">এই কোর্সে যা পাবে</h2>
               <div className="grid sm:grid-cols-2 gap-3">
@@ -876,8 +957,10 @@ const CourseSingleDetails = () => {
                 ))}
               </div>
             </div>
+            )}
 
-            {/* Requirements */}
+            {/* Requirements — only if content exists */}
+            {requirements.length > 0 && (
             <div>
               <h2 className="text-xl font-bold text-white mb-5">প্রয়োজনীয়তা</h2>
               <ul className="space-y-2">
@@ -889,8 +972,10 @@ const CourseSingleDetails = () => {
                 ))}
               </ul>
             </div>
+            )}
 
-            {/* Curriculum — "Course content" Udemy-style layout */}
+            {/* Curriculum — only if content exists */}
+            {curriculum.length > 0 && (
             <div>
               <h2 className="text-xl font-bold text-white mb-4">কোর্স কারিকুলাম</h2>
               <CurriculumSection
@@ -900,6 +985,7 @@ const CourseSingleDetails = () => {
                 }
               />
             </div>
+            )}
 
             {/* Reviews — auto-sliding carousel */}
             <div>
@@ -958,7 +1044,8 @@ const CourseSingleDetails = () => {
             </div>
             )}
 
-            {/* FAQ */}
+            {/* FAQ — only if content exists */}
+            {faqs.length > 0 && (
             <div>
               <h2 className="text-xl font-bold text-white mb-5">সচরাচর জিজ্ঞাসা</h2>
               <div className="space-y-3">
@@ -969,6 +1056,7 @@ const CourseSingleDetails = () => {
                 ))}
               </div>
             </div>
+            )}
           </div>
 
           {/* Right — sticky purchase card */}
@@ -1066,11 +1154,12 @@ const CourseSingleDetails = () => {
                   className="w-full flex items-center justify-center gap-2 border-2 border-purple-500 text-purple-200 font-bold px-6 py-3.5 rounded-xl text-base hover:bg-purple-500/10 transition-colors mb-3">
                   <FiShoppingCart size={16} /> Add to Cart
                 </button>
-                <Link to="/enroll"
-                  className="w-full block text-center font-extrabold px-6 py-3.5 rounded-xl text-white text-base transition-all hover:scale-[1.02] mb-3"
-                  style={{ background: "linear-gradient(90deg, #7c3aed, #db2777)" }}>
-                  Enroll Now
-                </Link>
+
+                  <CoursePaymentSection
+                course={course}
+                couponData={couponData}
+                finalPrice={finalPrice}
+              />
 
                 {/* This course includes */}
                 <div className="mt-6 pt-6 border-t border-purple-900">

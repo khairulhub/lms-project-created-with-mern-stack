@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, pendingFirebaseUser,
+      user, setUser, loading, pendingFirebaseUser,
       loginWithGoogle, loginWithEmail, verifyOTPAndLogin, resendOTP,
       signupWithEmail, logout,
     }}>

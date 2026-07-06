@@ -1,6 +1,9 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const InstructorRequest = require("../models/InstructorRequest");
+const Course = require("../models/Course");
+const Enrollment = require("../models/Enrollment");
+const StudentCourseReview = require("../models/StudentCourseReview");
 
 // GET /api/users/profile — get own profile
 const getProfile = asyncHandler(async (req, res) => {
@@ -69,4 +72,48 @@ const getMyRequest = asyncHandler(async (req, res) => {
   res.json(request || null);
 });
 
-module.exports = { getProfile, updateProfile, requestInstructor, getMyRequest };
+// GET /api/instructor/stats — instructor-er nijer course/student/revenue/review stats
+// instructorOnly middleware allow kore (admin + instructor role)
+const getInstructorStats = asyncHandler(async (req, res) => {
+  const instructorId = req.user._id;
+
+  // instructor-er sathe related saব courses (createdBy = req.user._id)
+  const courses = await Course.find({ createdBy: instructorId, isActive: true })
+    .select("_id title emoji badge price rating")
+    .lean();
+
+  const courseIds = courses.map((c) => c._id);
+
+  const [enrollments, reviews] = await Promise.all([
+    Enrollment.find({ course: { $in: courseIds }, status: "approved" })
+      .select("user course amountPaid createdAt")
+      .populate("user", "name email profileImage")
+      .populate("course", "title")
+      .sort({ createdAt: -1 })
+      .lean(),
+    StudentCourseReview.find({ course: { $in: courseIds }, isActive: true })
+      .select("name rating text course createdAt")
+      .populate("course", "title")
+      .sort({ createdAt: -1 })
+      .lean(),
+  ]);
+
+  const uniqueStudents = [...new Set(enrollments.map((e) => e.user?._id?.toString()))].length;
+  const totalRevenue   = enrollments.reduce((sum, e) => sum + (e.amountPaid || 0), 0);
+  const avgRating      = reviews.length
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null;
+
+  res.json({
+    courseCount:    courses.length,
+    studentCount:   uniqueStudents,
+    totalRevenue,
+    reviewCount:    reviews.length,
+    avgRating,
+    courses,
+    recentEnrollments: enrollments.slice(0, 5),
+    recentReviews:     reviews.slice(0, 5),
+  });
+});
+
+module.exports = { getProfile, updateProfile, requestInstructor, getMyRequest, getInstructorStats };
