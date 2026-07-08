@@ -1,13 +1,15 @@
 import { useAuth } from "../../contexts/AuthContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import api from "../../utils/api";
 import {
   FiBookOpen, FiBookmark, FiBarChart2, FiAward,
   FiBell, FiZap, FiHeadphones, FiUser,
 } from "react-icons/fi";
 
 const quickLinks = [
-  { to: "/student/my-classes",         icon: <FiBookOpen />,   label: "My Classes",         color: "cyan" },
+  { to: "/student/enrolled",           icon: <FiBookOpen />,   label: "My Classes",         color: "cyan" },
   { to: "/student/bookmark",           icon: <FiBookmark />,   label: "Bookmark",           color: "purple" },
   { to: "/student/analysis",           icon: <FiBarChart2 />,  label: "My Analysis",        color: "green" },
   { to: "/student/leaderboard",        icon: <FiAward />,      label: "Leaderboard",        color: "yellow" },
@@ -30,6 +32,49 @@ const colorMap = {
 
 const StudentDashboard = () => {
   const { user } = useAuth();
+  const [enrollments, setEnrollments] = useState([]);
+  const [certCount, setCertCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const { data } = await api.get("/enrollments/my");
+        if (cancelled) return;
+        setEnrollments(data);
+
+        const approved = data.filter((e) => e.status === "approved" && e.course);
+        // প্রতিটা approved course এর certificate eligibility check করে —
+        // certificateId থাকলে ধরে নিচ্ছি course টা completed
+        const results = await Promise.all(
+          approved.map((e) =>
+            api
+              .get(`/certificates/${e.course._id}/eligibility`)
+              .then(({ data }) => !!data.certificateId)
+              .catch(() => false)
+          )
+        );
+        if (!cancelled) setCertCount(results.filter(Boolean).length);
+      } catch (err) {
+        console.error("StudentDashboard load error:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const approvedCourses = enrollments.filter((e) => e.status === "approved" && e.course);
+  const stats = [
+    { label: "Enrolled Courses", value: loading ? "…" : String(approvedCourses.length), emoji: "📚" },
+    { label: "Completed",        value: loading ? "…" : String(certCount),              emoji: "✅" },
+    { label: "Certificates",     value: loading ? "…" : String(certCount),              emoji: "🏆" },
+    { label: "Bookmarks",        value: "0",                                            emoji: "🔖" },
+  ];
 
   return (
     <DashboardLayout>
@@ -51,12 +96,7 @@ const StudentDashboard = () => {
 
         {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: "Enrolled Courses", value: "0",  emoji: "📚" },
-            { label: "Completed",        value: "0",  emoji: "✅" },
-            { label: "Certificates",     value: "0",  emoji: "🏆" },
-            { label: "Bookmarks",        value: "0",  emoji: "🔖" },
-          ].map((s) => (
+          {stats.map((s) => (
             <div key={s.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-center">
               <div className="text-3xl mb-1">{s.emoji}</div>
               <div className="text-2xl font-bold text-white">{s.value}</div>
@@ -65,18 +105,53 @@ const StudentDashboard = () => {
           ))}
         </div>
 
-        {/* Enrolled Courses placeholder */}
+        {/* Enrolled Courses */}
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">My Enrolled Courses</h2>
-          <div className="bg-gray-900 border border-gray-800 border-dashed rounded-xl p-12 text-center">
-            <p className="text-5xl mb-4">🎓</p>
-            <p className="text-white font-semibold mb-2">No courses enrolled yet</p>
-            <p className="text-gray-500 text-sm mb-6">Browse our courses and start learning today</p>
-            <Link to="/"
-              className="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold px-6 py-2.5 rounded-xl transition-colors text-sm">
-              Browse Courses
-            </Link>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">My Enrolled Courses</h2>
+            {approvedCourses.length > 0 && (
+              <Link to="/student/enrolled" className="text-cyan-400 text-sm hover:underline">
+                View all →
+              </Link>
+            )}
           </div>
+
+          {loading ? (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center text-gray-500 text-sm">
+              Loading...
+            </div>
+          ) : approvedCourses.length === 0 ? (
+            <div className="bg-gray-900 border border-gray-800 border-dashed rounded-xl p-12 text-center">
+              <p className="text-5xl mb-4">🎓</p>
+              <p className="text-white font-semibold mb-2">No courses enrolled yet</p>
+              <p className="text-gray-500 text-sm mb-6">Browse our courses and start learning today</p>
+              <Link to="/"
+                className="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold px-6 py-2.5 rounded-xl transition-colors text-sm">
+                Browse Courses
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {approvedCourses.slice(0, 3).map((e) => (
+                <Link
+                  key={e._id}
+                  to={`/student/course/${e.course._id}`}
+                  className="bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-cyan-500/50 transition-colors flex items-center gap-3"
+                >
+                  {e.course.thumbnail ? (
+                    <img src={e.course.thumbnail} alt={e.course.title}
+                      className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-lg bg-gray-800 flex items-center justify-center text-2xl flex-shrink-0">📘</div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-white font-medium text-sm truncate">{e.course.title}</p>
+                    <p className="text-gray-500 text-xs mt-0.5">Continue learning →</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick Links */}

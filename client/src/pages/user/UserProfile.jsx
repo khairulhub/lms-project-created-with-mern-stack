@@ -4,9 +4,9 @@ import ProfileEditor from "../../components/common/ProfileEditor";
 
 const UserProfile = () => {
   const { user, setUser } = useAuth();
-  // AuthContext doesn't expose setUser directly, so we reload via window or pass a callback
+
   const handleUpdate = (updated) => {
-    // Update localStorage if needed; page will reflect via re-fetch on next load
+    if (typeof setUser === "function") setUser((prev) => ({ ...prev, ...updated }));
   };
 
   return (
