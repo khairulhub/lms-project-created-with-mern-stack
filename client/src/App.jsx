@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AnnouncementProvider } from "./contexts/AnnouncementContext";
+import { SessionNotificationProvider } from "./contexts/SessionNotificationContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Public
@@ -38,6 +40,8 @@ import InstructorDashboard from "./pages/instructor/InstructorDashboard";
 import InstructorBlogs from "./pages/instructor/InstructorBlogs";
 import InstructorProfile from "./pages/instructor/InstructorProfile";
 import InstructorCourses from "./pages/instructor/InstructorCourses";
+import InstructorAnnouncements from "./pages/instructor/InstructorAnnouncements";
+import InstructorSessions from "./pages/instructor/InstructorSessions";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -65,6 +69,8 @@ import AdminInstructorReviews from "./pages/admin/AdminInstructorReviews";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 
 import AdminEnrollments from "./pages/admin/AdminEnrollments";
+import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
+import AdminSessions from "./pages/admin/AdminSessions";
 
 
 
@@ -78,6 +84,8 @@ function App() {
       }}
     >
       <AuthProvider>
+      <AnnouncementProvider>
+      <SessionNotificationProvider>
         <Toaster position="top-right"
           toastOptions={{
             style: { background: "#1f2937", color: "#f9fafb", border: "1px solid #374151" },
@@ -119,6 +127,8 @@ function App() {
           <Route path="/instructor/blogs"     element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorBlogs /></ProtectedRoute>} />
           <Route path="/instructor/profile"   element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorProfile /></ProtectedRoute>} />
           <Route path="/instructor/courses"   element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorCourses /></ProtectedRoute>} />
+          <Route path="/instructor/announcements" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorAnnouncements /></ProtectedRoute>} />
+          <Route path="/instructor/sessions" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorSessions /></ProtectedRoute>} />
 
           {/* ── ADMIN ────────────────────────────────── */}
           <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
@@ -149,6 +159,8 @@ function App() {
 
 
           <Route path="/admin/enrollments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEnrollments /></ProtectedRoute>} />
+          <Route path="/admin/announcements" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnnouncements /></ProtectedRoute>} />
+          <Route path="/admin/sessions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSessions /></ProtectedRoute>} />
           <Route path="/admin/quiz-assignment" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQuizAssignment /></ProtectedRoute>} />
 
           
@@ -162,6 +174,8 @@ function App() {
             </div>
           } />
         </Routes>
+      </SessionNotificationProvider>
+      </AnnouncementProvider>
       </AuthProvider>
     </BrowserRouter>
   );

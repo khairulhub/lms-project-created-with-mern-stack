@@ -97,6 +97,18 @@ const {
   verifyCertificate,
 } = require("../controllers/certificateController");
 
+const {
+  getAdminAnnouncements, createAdminAnnouncement, updateAdminAnnouncement, deleteAdminAnnouncement,
+  getInstructorAnnouncements, createInstructorAnnouncement, updateInstructorAnnouncement, deleteInstructorAnnouncement,
+  getFeed, getUnreadCount, markAsRead,
+} = require("../controllers/announcementController");
+
+const {
+  getAdminSessions, createAdminSession, updateAdminSession, deleteAdminSession, getEndedSessionsCount,
+  getInstructorSessions, createInstructorSession, updateInstructorSession, deleteInstructorSession,
+  getSessionFeed,
+} = require("../controllers/sessionController");
+
 
 
 
@@ -441,6 +453,39 @@ router.get("/assignments/:courseId/my-submissions",         protect, getMySubmis
 router.get("/leaderboard/assignment/:courseId/module/:moduleIndex", protect, getModuleAssignmentLeaderboard);
 router.get("/leaderboard/assignment/:courseId/overall",             protect, getOverallAssignmentLeaderboard);
 
+// ─── ANNOUNCEMENTS ─────────────────────────────────────────────────────────
+// Admin — global othoba course-specific, students/instructors/both target kore
+router.get("/admin/announcements",        protect, adminOnly, getAdminAnnouncements);
+router.post("/admin/announcements",       protect, adminOnly, createAdminAnnouncement);
+router.put("/admin/announcements/:id",    protect, adminOnly, updateAdminAnnouncement);
+router.delete("/admin/announcements/:id", protect, adminOnly, deleteAdminAnnouncement);
 
+// Instructor — শুধু নিজের course এর জন্য (scope সবসময় "course")
+router.get("/instructor/announcements",        protect, instructorOnly, getInstructorAnnouncements);
+router.post("/instructor/announcements",       protect, instructorOnly, createInstructorAnnouncement);
+router.put("/instructor/announcements/:id",    protect, instructorOnly, updateInstructorAnnouncement);
+router.delete("/instructor/announcements/:id", protect, instructorOnly, deleteInstructorAnnouncement);
+
+// Feed — student + instructor উভয়ের জন্য relevant announcement দেখার জন্য
+router.get("/announcements/feed", protect, getFeed);
+router.get("/announcements/unread-count", protect, getUnreadCount);
+router.post("/announcements/:id/read", protect, markAsRead);
+
+// ─── CONCEPTUAL SESSIONS (Zoom / Google Meet) ──────────────────────────────
+// Admin — global othoba course-specific session
+router.get("/admin/sessions",        protect, adminOnly, getAdminSessions);
+router.get("/admin/sessions/ended-count", protect, adminOnly, getEndedSessionsCount);
+router.post("/admin/sessions",       protect, adminOnly, createAdminSession);
+router.put("/admin/sessions/:id",    protect, adminOnly, updateAdminSession);
+router.delete("/admin/sessions/:id", protect, adminOnly, deleteAdminSession);
+
+// Instructor — শুধু নিজের course এর জন্য session
+router.get("/instructor/sessions",        protect, instructorOnly, getInstructorSessions);
+router.post("/instructor/sessions",       protect, instructorOnly, createInstructorSession);
+router.put("/instructor/sessions/:id",    protect, instructorOnly, updateInstructorSession);
+router.delete("/instructor/sessions/:id", protect, instructorOnly, deleteInstructorSession);
+
+// Feed — student + instructor উভয়ের জন্য relevant session দেখার জন্য (join korar jonno)
+router.get("/sessions/feed", protect, getSessionFeed);
 
 module.exports = router;
