@@ -109,6 +109,11 @@ const {
   getSessionFeed,
 } = require("../controllers/sessionController");
 
+const {
+  createTicket, getMyTickets, getMyTicketById, replyToTicket, closeMyTicket, getMyUnreadCount,
+  getAllTickets, getAdminTicketById, adminReplyToTicket, updateTicketStatus, deleteTicket, getOpenTicketsCount,
+} = require("../controllers/helpdeskController");
+
 
 
 
@@ -487,5 +492,22 @@ router.delete("/instructor/sessions/:id", protect, instructorOnly, deleteInstruc
 
 // Feed — student + instructor উভয়ের জন্য relevant session দেখার জন্য (join korar jonno)
 router.get("/sessions/feed", protect, getSessionFeed);
+
+// ─── HELPDESK (support tickets) ─────────────────────────────────────────────
+// Student — nijer ticket khola, dekha, reply, close
+router.post("/helpdesk/tickets",              protect, createTicket);
+router.get("/helpdesk/tickets/my",            protect, getMyTickets);
+router.get("/helpdesk/tickets/unread-count",  protect, getMyUnreadCount);
+router.get("/helpdesk/tickets/:id",           protect, getMyTicketById);
+router.post("/helpdesk/tickets/:id/reply",    protect, replyToTicket);
+router.put("/helpdesk/tickets/:id/close",     protect, closeMyTicket);
+
+// Admin — shob ticket dekha, reply, status change, delete
+router.get("/admin/helpdesk/tickets",             protect, adminOnly, getAllTickets);
+router.get("/admin/helpdesk/tickets/open-count",  protect, adminOnly, getOpenTicketsCount);
+router.get("/admin/helpdesk/tickets/:id",         protect, adminOnly, getAdminTicketById);
+router.post("/admin/helpdesk/tickets/:id/reply",  protect, adminOnly, adminReplyToTicket);
+router.put("/admin/helpdesk/tickets/:id/status",  protect, adminOnly, updateTicketStatus);
+router.delete("/admin/helpdesk/tickets/:id",      protect, adminOnly, deleteTicket);
 
 module.exports = router;

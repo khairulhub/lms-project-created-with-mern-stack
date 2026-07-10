@@ -3,15 +3,17 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useAnnouncements } from "../../contexts/AnnouncementContext";
 import { useSessionNotifications } from "../../contexts/SessionNotificationContext";
+import { useHelpdesk } from "../../contexts/HelpdeskContext";
 import {
   FiHome, FiUser, FiUsers, FiFileText, FiTag, FiLogOut,
-  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare, FiAward, FiBell, FiVideo,
+  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare, FiAward, FiBell, FiVideo, FiHeadphones,
 } from "react-icons/fi";
 
 const DashboardLayout = ({ children, hidePadding = false }) => {
   const { user, logout } = useAuth();
   const { unreadCount } = useAnnouncements() || {};
   const { endedSessionsCount } = useSessionNotifications() || {};
+  const { helpdeskCount } = useHelpdesk() || {};
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -48,6 +50,7 @@ const DashboardLayout = ({ children, hidePadding = false }) => {
     { to: "/admin/blogs", icon: <FiFileText />, label: "Blogs" },
     { to: "/admin/announcements", icon: <FiBell />, label: "Announcements" },
     { to: "/admin/sessions", icon: <FiVideo />, label: "Sessions", badge: endedSessionsCount },
+    { to: "/admin/helpdesk", icon: <FiHeadphones />, label: "Helpdesk", badge: helpdeskCount },
     { to: "/admin/coupons", icon: <FiTag />, label: "Coupons" },
     { to: "/admin/enrollments", icon: <FiCheckCircle />, label: "Enrollments" },
     { to: "/admin/quiz-assignment", icon: <FiAward />, label: "Quiz & Assignment" },
@@ -92,10 +95,11 @@ const DashboardLayout = ({ children, hidePadding = false }) => {
 
   const userLinks = [
     { to: "/student/dashboard", icon: <FiHome />, label: "Dashboard" },
-    { to: "/student/my-classes", icon: <FiFileText />, label: "My Classes" },
+    { to: "/student/enrolled", icon: <FiFileText />, label: "My Classes" },
     { to: "/student/bookmark", icon: <FiTag />, label: "Bookmark" },
     { to: "/student/announcement", icon: <FiBell />, label: "Announcement", badge: unreadCount },
     { to: "/student/conceptual-session", icon: <FiVideo />, label: "Conceptual Session" },
+    { to: "/student/helpdesk", icon: <FiHeadphones />, label: "Helpdesk", badge: helpdeskCount },
     {
       label: "My Profile",
       icon: <FiUser />,
@@ -105,7 +109,6 @@ const DashboardLayout = ({ children, hidePadding = false }) => {
       ],
     },
     { to: "/user/instructor-request", icon: <FiCheckCircle />, label: "Become Instructor" },
-    { to: "/student/enrolled", icon: <FiBookOpen />, label: "আমার কোর্সসমূহ" },
   ];
 
   const links =

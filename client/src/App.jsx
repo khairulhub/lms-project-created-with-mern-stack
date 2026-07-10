@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AnnouncementProvider } from "./contexts/AnnouncementContext";
 import { SessionNotificationProvider } from "./contexts/SessionNotificationContext";
+import { HelpdeskProvider } from "./contexts/HelpdeskContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Public
@@ -18,7 +19,6 @@ import VerifyCertificate from "./pages/public/VerifyCertificate";
 // Student pages
 import StudentDashboard from "./pages/student/StudentDashboard";
 import EnrolledCourses from "./pages/student/EnrolledCourses";
-import MyClasses from "./pages/student/MyClasses";
 import Bookmark from "./pages/student/Bookmark";
 import Helpdesk from "./pages/student/Helpdesk";
 import Analysis from "./pages/student/Analysis";
@@ -71,6 +71,7 @@ import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminEnrollments from "./pages/admin/AdminEnrollments";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminSessions from "./pages/admin/AdminSessions";
+import AdminHelpdesk from "./pages/admin/AdminHelpdesk";
 
 
 
@@ -86,6 +87,7 @@ function App() {
       <AuthProvider>
       <AnnouncementProvider>
       <SessionNotificationProvider>
+      <HelpdeskProvider>
         <Toaster position="top-right"
           toastOptions={{
             style: { background: "#1f2937", color: "#f9fafb", border: "1px solid #374151" },
@@ -106,7 +108,6 @@ function App() {
           <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
           <Route path="/student/enrolled" element={<ProtectedRoute><EnrolledCourses /></ProtectedRoute>} />
           <Route path="/student/course/:courseId" element={<ProtectedRoute><StudentCourseView /></ProtectedRoute>} />
-          <Route path="/student/my-classes" element={<ProtectedRoute><MyClasses /></ProtectedRoute>} />
           <Route path="/student/bookmark" element={<ProtectedRoute><Bookmark /></ProtectedRoute>} />
           <Route path="/student/helpdesk" element={<ProtectedRoute><Helpdesk /></ProtectedRoute>} />
           <Route path="/student/analysis" element={<ProtectedRoute><Analysis /></ProtectedRoute>} />
@@ -161,6 +162,7 @@ function App() {
           <Route path="/admin/enrollments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEnrollments /></ProtectedRoute>} />
           <Route path="/admin/announcements" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnnouncements /></ProtectedRoute>} />
           <Route path="/admin/sessions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSessions /></ProtectedRoute>} />
+          <Route path="/admin/helpdesk" element={<ProtectedRoute allowedRoles={["admin"]}><AdminHelpdesk /></ProtectedRoute>} />
           <Route path="/admin/quiz-assignment" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQuizAssignment /></ProtectedRoute>} />
 
           
@@ -174,6 +176,7 @@ function App() {
             </div>
           } />
         </Routes>
+      </HelpdeskProvider>
       </SessionNotificationProvider>
       </AnnouncementProvider>
       </AuthProvider>
