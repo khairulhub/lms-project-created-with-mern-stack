@@ -32,7 +32,7 @@ const {
   getWhatYouLearn, getAdminWhatYouLearn, updateWhatYouLearnSection,
   createWhatYouLearnItem, updateWhatYouLearnItem, deleteWhatYouLearnItem,
 } = require("../controllers/courseWhatYouLearnController");
-const { uploadVideo } = require("../config/upload");
+const { uploadVideo, uploadChatFile } = require("../config/upload");
 
 const {
   getCurriculum, getAdminCurriculum, updateCurriculumSection,
@@ -113,6 +113,13 @@ const {
   createTicket, getMyTickets, getMyTicketById, replyToTicket, closeMyTicket, getMyUnreadCount,
   getAllTickets, getAdminTicketById, adminReplyToTicket, updateTicketStatus, deleteTicket, getOpenTicketsCount,
 } = require("../controllers/helpdeskController");
+
+const {
+  getMyCourseChat, sendStudentMessage, getStudentUnreadCount,
+  getInstructorThreads, getInstructorThreadById, instructorReply, getInstructorUnreadCount,
+  getAdminThreads, getAdminThreadById, adminReply, getAdminUnreadCount,
+  uploadAttachment,
+} = require("../controllers/courseChatController");
 
 
 
@@ -509,5 +516,26 @@ router.get("/admin/helpdesk/tickets/:id",         protect, adminOnly, getAdminTi
 router.post("/admin/helpdesk/tickets/:id/reply",  protect, adminOnly, adminReplyToTicket);
 router.put("/admin/helpdesk/tickets/:id/status",  protect, adminOnly, updateTicketStatus);
 router.delete("/admin/helpdesk/tickets/:id",      protect, adminOnly, deleteTicket);
+
+// ─── COURSE CHAT (student ↔ instructor/admin, per course) ───────────────────
+// File/image upload — shared, jekono logged-in role use korte pare
+router.post("/course-chat/upload", protect, uploadChatFile.single("file"), uploadAttachment);
+
+// Student — nijer kena course-er chat thread
+router.get("/course-chat/unread-count",     protect, getStudentUnreadCount);
+router.get("/course-chat/:courseId",        protect, getMyCourseChat);
+router.post("/course-chat/:courseId/message", protect, sendStudentMessage);
+
+// Instructor — nijer course-gulor shob chat thread
+router.get("/instructor/course-chat/threads",       protect, instructorOnly, getInstructorThreads);
+router.get("/instructor/course-chat/unread-count",  protect, instructorOnly, getInstructorUnreadCount);
+router.get("/instructor/course-chat/:threadId",     protect, instructorOnly, getInstructorThreadById);
+router.post("/instructor/course-chat/:threadId/message", protect, instructorOnly, instructorReply);
+
+// Admin — shob course-er shob chat thread (oversight)
+router.get("/admin/course-chat/threads",       protect, adminOnly, getAdminThreads);
+router.get("/admin/course-chat/unread-count",  protect, adminOnly, getAdminUnreadCount);
+router.get("/admin/course-chat/:threadId",     protect, adminOnly, getAdminThreadById);
+router.post("/admin/course-chat/:threadId/message", protect, adminOnly, adminReply);
 
 module.exports = router;

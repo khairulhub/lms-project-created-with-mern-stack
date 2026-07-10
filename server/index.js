@@ -38,17 +38,22 @@ const start = async () => {
   // MulterError / generic Error from the fileFilter — turn them into a
   // clean 400 instead of falling through to the generic 500 handler.
   app.use((err, req, res, next) => {
+    const isChatUpload = req.path?.includes("/course-chat/upload");
     if (err instanceof multer.MulterError) {
       if (err.code === "LIMIT_FILE_SIZE") {
-        return res.status(400).json({ message: "Video file 100MB-er beshi boro. Choto file upload koro." });
+        return res.status(400).json({
+          message: isChatUpload
+            ? "ফাইল 15MB-এর বেশি বড়। ছোট ফাইল দিন।"
+            : "Video file 100MB-er beshi boro. Choto file upload koro.",
+        });
       }
       return res.status(400).json({ message: err.message });
     }
-    if (err && err.message && err.message.includes("Unsupported video format")) {
+    if (err && err.message && (err.message.includes("Unsupported video format") || err.message.includes("সাপোর্টেড না"))) {
       return res.status(400).json({ message: err.message });
     }
     if (err && /cloudinary|cloud_name|Invalid Signature|Must supply api_key/i.test(err.message || "")) {
-      return res.status(500).json({ message: "Video upload service set up hoyni thik moto। .env-e CLOUDINARY_* values check koro." });
+      return res.status(500).json({ message: "Upload service set up hoyni thik moto। .env-e CLOUDINARY_* values check koro." });
     }
     next(err);
   });

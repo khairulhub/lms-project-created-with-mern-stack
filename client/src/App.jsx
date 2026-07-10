@@ -4,6 +4,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AnnouncementProvider } from "./contexts/AnnouncementContext";
 import { SessionNotificationProvider } from "./contexts/SessionNotificationContext";
 import { HelpdeskProvider } from "./contexts/HelpdeskContext";
+import { CourseChatProvider } from "./contexts/CourseChatContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // Public
@@ -21,6 +22,7 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import EnrolledCourses from "./pages/student/EnrolledCourses";
 import Bookmark from "./pages/student/Bookmark";
 import Helpdesk from "./pages/student/Helpdesk";
+import CourseChatPage from "./pages/student/CourseChatPage";
 import Analysis from "./pages/student/Analysis";
 import Leaderboard from "./pages/student/Leaderboard";
 import Announcement from "./pages/student/Announcement";
@@ -42,6 +44,7 @@ import InstructorProfile from "./pages/instructor/InstructorProfile";
 import InstructorCourses from "./pages/instructor/InstructorCourses";
 import InstructorAnnouncements from "./pages/instructor/InstructorAnnouncements";
 import InstructorSessions from "./pages/instructor/InstructorSessions";
+import InstructorMessages from "./pages/instructor/InstructorMessages";
 
 // Admin
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -72,6 +75,7 @@ import AdminEnrollments from "./pages/admin/AdminEnrollments";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
 import AdminSessions from "./pages/admin/AdminSessions";
 import AdminHelpdesk from "./pages/admin/AdminHelpdesk";
+import AdminMessages from "./pages/admin/AdminMessages";
 
 
 
@@ -88,6 +92,7 @@ function App() {
       <AnnouncementProvider>
       <SessionNotificationProvider>
       <HelpdeskProvider>
+      <CourseChatProvider>
         <Toaster position="top-right"
           toastOptions={{
             style: { background: "#1f2937", color: "#f9fafb", border: "1px solid #374151" },
@@ -108,6 +113,7 @@ function App() {
           <Route path="/student/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
           <Route path="/student/enrolled" element={<ProtectedRoute><EnrolledCourses /></ProtectedRoute>} />
           <Route path="/student/course/:courseId" element={<ProtectedRoute><StudentCourseView /></ProtectedRoute>} />
+          <Route path="/student/course/:courseId/chat" element={<ProtectedRoute><CourseChatPage /></ProtectedRoute>} />
           <Route path="/student/bookmark" element={<ProtectedRoute><Bookmark /></ProtectedRoute>} />
           <Route path="/student/helpdesk" element={<ProtectedRoute><Helpdesk /></ProtectedRoute>} />
           <Route path="/student/analysis" element={<ProtectedRoute><Analysis /></ProtectedRoute>} />
@@ -130,6 +136,7 @@ function App() {
           <Route path="/instructor/courses"   element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorCourses /></ProtectedRoute>} />
           <Route path="/instructor/announcements" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorAnnouncements /></ProtectedRoute>} />
           <Route path="/instructor/sessions" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorSessions /></ProtectedRoute>} />
+          <Route path="/instructor/messages" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorMessages /></ProtectedRoute>} />
 
           {/* ── ADMIN ────────────────────────────────── */}
           <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
@@ -163,6 +170,7 @@ function App() {
           <Route path="/admin/announcements" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnnouncements /></ProtectedRoute>} />
           <Route path="/admin/sessions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSessions /></ProtectedRoute>} />
           <Route path="/admin/helpdesk" element={<ProtectedRoute allowedRoles={["admin"]}><AdminHelpdesk /></ProtectedRoute>} />
+          <Route path="/admin/messages" element={<ProtectedRoute allowedRoles={["admin"]}><AdminMessages /></ProtectedRoute>} />
           <Route path="/admin/quiz-assignment" element={<ProtectedRoute allowedRoles={["admin"]}><AdminQuizAssignment /></ProtectedRoute>} />
 
           
@@ -176,6 +184,7 @@ function App() {
             </div>
           } />
         </Routes>
+      </CourseChatProvider>
       </HelpdeskProvider>
       </SessionNotificationProvider>
       </AnnouncementProvider>
