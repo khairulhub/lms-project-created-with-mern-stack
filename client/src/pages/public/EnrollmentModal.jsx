@@ -44,15 +44,6 @@ const BD_METHODS = [
     txPlaceholder: "যেমন: RKT-789012",
     needsScreenshot: true,
   },
-  {
-    id: "SSL Commerz",
-    label: "SSL Commerz",
-    emoji: "🔒",
-    color: "#00A651",
-    hint: "Card / Net Banking / Mobile Banking সবই চলে",
-    txPlaceholder: "SSL Transaction ID",
-    needsScreenshot: false,
-  },
 ];
 
 const INTL_METHODS = [
@@ -102,6 +93,21 @@ const EnrollmentModal = ({ course, couponData, finalPrice, onClose, onSuccess })
   const [screenshot, setScreenshot] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [payingAuto, setPayingAuto] = useState(false);
+
+  const handleAutoPay = async () => {
+    setPayingAuto(true);
+    try {
+      const { data } = await api.post("/payments/sslcommerz/init", {
+        courseId: course._id,
+        couponCode: couponData?.code || "",
+      });
+      window.location.href = data.gatewayUrl; // SSLCommerz checkout page-এ নিয়ে যাবে
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Payment শুরু করা যায়নি।");
+      setPayingAuto(false);
+    }
+  };
 
   const allMethods = tab === "bd" ? BD_METHODS : INTL_METHODS;
 
@@ -195,6 +201,28 @@ const EnrollmentModal = ({ course, couponData, finalPrice, onClose, onSuccess })
                 Secure Payment 🔒
               </span>
             </div>
+          </div>
+
+          {/* ── Automated payment — instant approval, kono admin wait lagbe na ── */}
+          <button
+            onClick={handleAutoPay}
+            disabled={payingAuto}
+            className="w-full flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl mb-3 text-sm transition-all hover:scale-[1.01]"
+            style={{
+              background: "linear-gradient(90deg,#059669,#06b6d4)", color: "#fff",
+              opacity: payingAuto ? 0.7 : 1,
+            }}
+          >
+            {payingAuto ? "Redirect হচ্ছে..." : "⚡ Pay Now — bKash / Nagad / Card (Instant Approval)"}
+          </button>
+          <p className="text-center text-gray-500 text-xs mb-4">
+            SSLCommerz দিয়ে secure payment — সফল হলেই সাথে সাথে enroll হয়ে যাবে, admin approval লাগবে না।
+          </p>
+
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-purple-900/60" />
+            <span className="text-gray-500 text-xs">অথবা manual পদ্ধতিতে পে করো</span>
+            <div className="flex-1 h-px bg-purple-900/60" />
           </div>
 
           {/* Region tabs */}

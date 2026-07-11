@@ -7,7 +7,7 @@ import { useHelpdesk } from "../../contexts/HelpdeskContext";
 import { useCourseChat } from "../../contexts/CourseChatContext";
 import {
   FiHome, FiUser, FiUsers, FiFileText, FiTag, FiLogOut,
-  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare, FiAward, FiBell, FiVideo, FiHeadphones,
+  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare, FiAward, FiBell, FiVideo, FiHeadphones, FiTrendingUp, FiHeart,
 } from "react-icons/fi";
 
 const DashboardLayout = ({ children, hidePadding = false }) => {
@@ -101,6 +101,9 @@ const DashboardLayout = ({ children, hidePadding = false }) => {
     { to: "/student/dashboard", icon: <FiHome />, label: "Dashboard" },
     { to: "/student/enrolled", icon: <FiFileText />, label: "My Classes", badge: chatUnreadCount },
     { to: "/student/bookmark", icon: <FiTag />, label: "Bookmark" },
+    { to: "/student/wishlist", icon: <FiHeart />, label: "Wishlist" },
+    { to: "/student/analysis", icon: <FiTrendingUp />, label: "Analysis" },
+    { to: "/student/leaderboard", icon: <FiAward />, label: "Leaderboard" },
     { to: "/student/announcement", icon: <FiBell />, label: "Announcement", badge: unreadCount },
     { to: "/student/conceptual-session", icon: <FiVideo />, label: "Conceptual Session" },
     { to: "/student/helpdesk", icon: <FiHeadphones />, label: "Helpdesk", badge: helpdeskCount },

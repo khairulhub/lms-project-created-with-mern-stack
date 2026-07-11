@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const HelpdeskTicket = require("../models/HelpdeskTicket");
+const { sendTicketReplyEmail } = require("../config/mailer");
 
 const POPULATE_USER = "name email role profileImage";
 
@@ -133,10 +134,19 @@ const adminReplyToTicket = asyncHandler(async (req, res) => {
   if (ticket.status === "open") ticket.status = "in_progress";
   await ticket.save();
 
-  res.json(await ticket.populate([
+  const populated = await ticket.populate([
     { path: "user", select: POPULATE_USER },
     { path: "replies.sender", select: POPULATE_USER },
-  ]));
+  ]);
+
+  if (populated.user?.email) {
+    sendTicketReplyEmail(populated.user.email, {
+      studentName: populated.user.name,
+      subject: populated.subject,
+    }).catch((e) => console.error("Ticket reply email failed:", e.message));
+  }
+
+  res.json(populated);
 });
 
 // PUT /api/admin/helpdesk/tickets/:id/status — { status: "open"|"in_progress"|"resolved"|"closed" }

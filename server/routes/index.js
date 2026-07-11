@@ -538,4 +538,37 @@ router.get("/admin/course-chat/unread-count",  protect, adminOnly, getAdminUnrea
 router.get("/admin/course-chat/:threadId",     protect, adminOnly, getAdminThreadById);
 router.post("/admin/course-chat/:threadId/message", protect, adminOnly, adminReply);
 
+// ─── BOOKMARKS (student saves lectures for later) ───────────────────────────
+const { getCourseBookmarks, toggleBookmark, getMyBookmarks, deleteBookmark } = require("../controllers/bookmarkController");
+
+router.get("/bookmarks/my",                 protect, getMyBookmarks);
+router.get("/bookmarks/course/:courseId",   protect, getCourseBookmarks);
+router.post("/bookmarks/toggle",            protect, toggleBookmark);
+router.delete("/bookmarks/:id",             protect, deleteBookmark);
+
+// ─── ANALYSIS (student performance dashboard, aggregated across courses) ────
+const { getMyAnalysis } = require("../controllers/analysisController");
+router.get("/analysis/me", protect, getMyAnalysis);
+
+// ─── WISHLIST (course-level save-before-buying, public listing theke) ──────
+const { getMyWishlist, getMyWishlistIds, toggleWishlist } = require("../controllers/wishlistController");
+
+router.get("/wishlist/my",      protect, getMyWishlist);
+router.get("/wishlist/ids",     protect, getMyWishlistIds);
+router.post("/wishlist/toggle", protect, toggleWishlist);
+
+// ─── PAYMENTS (SSLCommerz automated gateway) ────────────────────────────────
+// init/status protected (student action) — success/fail/cancel/ipn PUBLIC,
+// karon SSLCommerz nijei call kore (kono JWT thake na oi request e)
+const {
+  initiatePayment, paymentSuccess, paymentFail, paymentCancel, paymentIPN, getTransactionStatus,
+} = require("../controllers/paymentController");
+
+router.post("/payments/sslcommerz/init",              protect, initiatePayment);
+router.get("/payments/sslcommerz/status/:tranId",      protect, getTransactionStatus);
+router.post("/payments/sslcommerz/success",            paymentSuccess);
+router.post("/payments/sslcommerz/fail",               paymentFail);
+router.post("/payments/sslcommerz/cancel",              paymentCancel);
+router.post("/payments/sslcommerz/ipn",                paymentIPN);
+
 module.exports = router;

@@ -4,7 +4,7 @@
 // Lectures play one by one; finishing one auto-advances to the next.
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
@@ -329,7 +329,7 @@ const LectureTabs = ({ activeLecture, isLectureDone, onMarkComplete }) => {
 };
 
 // ── Sidebar: module list with quiz + assignment indicators ────────────────
-const Sidebar = ({ courseId, curriculum, flatLectures, activeLecture, onSelect, completed, quizAttempts, quizExists, asgnExists, activePanel, onOpenQuiz, onOpenAssignment }) => {
+const Sidebar = ({ courseId, curriculum, flatLectures, activeLecture, onSelect, completed, quizAttempts, quizExists, asgnExists, activePanel, onOpenQuiz, onOpenAssignment, bookmarked, onToggleBookmark }) => {
   const [openSections, setOpenSections] = useState(() =>
     curriculum.reduce((acc, _, i) => ({ ...acc, [i]: i === 0 }), {})
   );
@@ -426,6 +426,17 @@ const Sidebar = ({ courseId, curriculum, flatLectures, activeLecture, onSelect, 
                           </p>
                           {lec.duration && <p className="text-gray-600 text-xs mt-0.5">{lec.duration}</p>}
                         </div>
+                        {onToggleBookmark && (
+                          <span
+                            role="button"
+                            title={bookmarked?.has(String(lec._id)) ? "Bookmark সরাও" : "পরে দেখার জন্য Bookmark করো"}
+                            onClick={(e) => { e.stopPropagation(); onToggleBookmark(lec, section._id); }}
+                            className="shrink-0 mt-0.5 px-1"
+                            style={{ color: bookmarked?.has(String(lec._id)) ? "#facc15" : "#4b5563", cursor: "pointer" }}
+                          >
+                            {bookmarked?.has(String(lec._id)) ? "★" : "☆"}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -496,6 +507,7 @@ const Sidebar = ({ courseId, curriculum, flatLectures, activeLecture, onSelect, 
 const StudentCourseView = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [course, setCourse] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -507,6 +519,8 @@ const StudentCourseView = () => {
   const [completed, setCompleted] = useState(new Set());
   const [progressLoaded, setProgressLoaded] = useState(false);
   const lastWatchedRef = useRef(null);
+  const jumpToLectureRef = useRef(searchParams.get("lecture") || null);
+  const [bookmarked, setBookmarked] = useState(new Set()); // lectureId (string) → bookmarked
 
   // Quiz + Assignment state
   const [quizAttempts, setQuizAttempts] = useState({}); // sectionId → last attempt
@@ -540,13 +554,14 @@ const StudentCourseView = () => {
         setEnrollment(enrollRes.data);
 
         // 2. Load course basic info + curriculum + saved progress (parallel)
-        const [courseRes, detailRes, progressRes, attemptsRes, quizListRes, asgnListRes] = await Promise.allSettled([
+        const [courseRes, detailRes, progressRes, attemptsRes, quizListRes, asgnListRes, bookmarksRes] = await Promise.allSettled([
           api.get(`/courses/${courseId}`),
           api.get(`/course-details/${courseId}`),
           api.get(`/progress/${courseId}`),
           api.get(`/quizzes/${courseId}/my-attempts`),
           api.get(`/quizzes/${courseId}/list`),
           api.get(`/assignments/${courseId}`),
+          api.get(`/bookmarks/course/${courseId}`),
         ]);
 
         if (courseRes.status === "fulfilled") setCourse(courseRes.value.data);
@@ -575,6 +590,10 @@ const StudentCourseView = () => {
           const map = {};
           (asgnListRes.value.data || []).forEach(a => { map[a.moduleIndex] = a; });
           setAsgnExists(map);
+        }
+        // 7. Load this course-এর bookmarked lecture id গুলো (Bookmark page থেকে জাম্প/স্টার state)
+        if (bookmarksRes.status === "fulfilled") {
+          setBookmarked(new Set((bookmarksRes.value.data || []).map(String)));
         }
         setProgressLoaded(true);
 
@@ -609,10 +628,16 @@ const StudentCourseView = () => {
   // করো (refresh/device change এর পরও), না থাকলে প্রথম lecture select করো।
   useEffect(() => {
     if (flatLectures.length > 0 && !activeLecture && progressLoaded) {
-      const resumeAt = lastWatchedRef.current
+      // Bookmark page থেকে ?lecture=<id> দিয়ে এলে সেটাই প্রথমে দেখাও, না হলে
+      // last-watched থেকে resume, না হলে প্রথম lecture
+      const jumpTo = jumpToLectureRef.current
+        ? flatLectures.find((l) => String(l._id) === jumpToLectureRef.current)
+        : null;
+      jumpToLectureRef.current = null;
+      const resumeAt = !jumpTo && lastWatchedRef.current
         ? flatLectures.find((l) => String(l._id) === lastWatchedRef.current)
         : null;
-      setActiveLecture(resumeAt || flatLectures[0]);
+      setActiveLecture(jumpTo || resumeAt || flatLectures[0]);
     }
   }, [flatLectures.length, progressLoaded]);
 
@@ -661,6 +686,35 @@ const StudentCourseView = () => {
       setDownloadingCert(false);
     }
   }, [courseId]);
+
+  // ── Bookmark (save for later) toggle — optimistic UI update ──────────────
+  const toggleLectureBookmark = useCallback((lec, sectionId) => {
+    if (!lec?._id) return;
+    const key = String(lec._id);
+    const willBookmark = !bookmarked.has(key);
+
+    setBookmarked((prev) => {
+      const next = new Set(prev);
+      if (willBookmark) next.add(key); else next.delete(key);
+      return next;
+    });
+
+    api.post("/bookmarks/toggle", {
+      courseId,
+      sectionId,
+      lectureId: lec._id,
+      courseTitle: course?.title || "",
+      lectureTitle: lec.title || "",
+    }).catch(() => {
+      // fail হলে UI state আগের মতো ফিরিয়ে দাও
+      setBookmarked((prev) => {
+        const next = new Set(prev);
+        if (willBookmark) next.delete(key); else next.add(key);
+        return next;
+      });
+      toast.error("Bookmark করতে সমস্যা হয়েছে।");
+    });
+  }, [bookmarked, courseId, course]);
 
   const markCompleted = useCallback((lec) => {
     if (!lec?._id) return;
@@ -1135,6 +1189,8 @@ const StudentCourseView = () => {
             activePanel={activePanel}
             onOpenQuiz={openQuiz}
             onOpenAssignment={openAssignment}
+            bookmarked={bookmarked}
+            onToggleBookmark={toggleLectureBookmark}
           />
         </div>
       </div>

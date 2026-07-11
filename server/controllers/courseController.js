@@ -7,7 +7,7 @@ const StudentCourseReview = require("../models/StudentCourseReview");
 // ── PUBLIC ────────────────────────────────────────────────────────────────
 
 const getPublicCourses = asyncHandler(async (req, res) => {
-  const { category } = req.query;
+  const { category, search } = req.query;
   // Old courses don't have approvalStatus — treat missing as "approved".
   // Only explicitly "rejected" or "pending" courses are hidden.
   let filter = {
@@ -21,6 +21,15 @@ const getPublicCourses = asyncHandler(async (req, res) => {
   if (category) {
     const cat = await Category.findOne({ slug: category });
     if (cat) filter.category = cat._id;
+  }
+  if (search?.trim()) {
+    // title/description/tags-এ case-insensitive match — $or এর সাথে category
+    // filter combine করতে $and লাগবে, কারণ filter-এ আগে থেকেই একটা $or আছে
+    const regex = new RegExp(search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    filter = {
+      ...filter,
+      $and: [{ $or: [{ title: regex }, { description: regex }, { tags: regex }] }],
+    };
   }
   const courses = await Course.find(filter)
     .populate("category", "name slug icon")

@@ -12,6 +12,7 @@ const CourseDetail = require("../models/CourseDetail");
 const Course = require("../models/Course");
 const CourseHeroSection = require("../models/CourseHeroSection");
 const SiteConfig = require("../models/SiteConfig");
+const { sendCertificateIssuedEmail } = require("../config/mailer");
 
 // ── Mixed Bengali/English text rendering ──────────────────────────────────
 const BENGALI_RANGE = /[\u0980-\u09FF]/;
@@ -317,6 +318,7 @@ const getOrIssueCertificate = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Invalid course id" });
 
   let certificate = await Certificate.findOne({ user: req.user._id, course: courseId });
+  let justIssued = false;
 
   if (!certificate) {
     const eligibility = await checkEligibility(req.user._id, courseId);
@@ -338,6 +340,7 @@ const getOrIssueCertificate = asyncHandler(async (req, res) => {
         studentName: data.studentName,
         courseTitle: data.courseTitle,
       });
+      justIssued = true;
     } catch (err) {
       if (err.code === 11000) {
         certificate = await Certificate.findOne({ user: req.user._id, course: courseId });
@@ -345,6 +348,14 @@ const getOrIssueCertificate = asyncHandler(async (req, res) => {
         throw err;
       }
     }
+  }
+
+  // প্রথমবার issue হলেই email পাঠাও, বারবার PDF re-download এ না
+  if (justIssued && req.user?.email) {
+    sendCertificateIssuedEmail(req.user.email, {
+      studentName: certificate.studentName,
+      courseTitle: certificate.courseTitle,
+    }).catch((e) => console.error("Certificate email failed:", e.message));
   }
 
   // DB থেকে instructor + site config টেনে আনো প্রতিবার render-এর আগে

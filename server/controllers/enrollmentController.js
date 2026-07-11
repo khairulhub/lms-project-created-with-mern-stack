@@ -1,6 +1,7 @@
 const Enrollment = require("../models/Enrollment");
 const Course = require("../models/Course");
 const Coupon = require("../models/Coupon");
+const { sendEnrollmentApprovedEmail, sendEnrollmentRejectedEmail } = require("../config/mailer");
 
 // ─── STUDENT: Enroll করার request submit ─────────────────────────────────────
 // POST /api/enrollments
@@ -159,6 +160,21 @@ const reviewEnrollment = async (req, res) => {
       { path: "user", select: "name email" },
       { path: "course", select: "title" },
     ]);
+
+    // Email notification — fail hole o main response block hobe na
+    if (populated.user?.email) {
+      const emailPromise = action === "approve"
+        ? sendEnrollmentApprovedEmail(populated.user.email, {
+            studentName: populated.user.name,
+            courseTitle: populated.course?.title || "কোর্স",
+          })
+        : sendEnrollmentRejectedEmail(populated.user.email, {
+            studentName: populated.user.name,
+            courseTitle: populated.course?.title || "কোর্স",
+            reason: adminNote || "",
+          });
+      emailPromise.catch((e) => console.error("Enrollment review email failed:", e.message));
+    }
 
     res.json({
       message: action === "approve"

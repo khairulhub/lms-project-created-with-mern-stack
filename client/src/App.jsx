@@ -10,6 +10,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 // Public
 import Home from "./pages/public/Home";
 import Login from "./pages/public/Login";
+import ForgotPassword from "./pages/public/ForgotPassword";
+import PaymentCallback from "./pages/public/PaymentCallback";
 import Signup from "./pages/public/Signup";
 import Blogs from "./pages/public/Blogs";
 import BlogDetail from "./pages/public/BlogDetail";
@@ -21,6 +23,7 @@ import VerifyCertificate from "./pages/public/VerifyCertificate";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import EnrolledCourses from "./pages/student/EnrolledCourses";
 import Bookmark from "./pages/student/Bookmark";
+import Wishlist from "./pages/student/Wishlist";
 import Helpdesk from "./pages/student/Helpdesk";
 import CourseChatPage from "./pages/student/CourseChatPage";
 import Analysis from "./pages/student/Analysis";
@@ -102,6 +105,8 @@ function App() {
           {/* ── PUBLIC ──────────────────────────────── */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/payment/callback" element={<PaymentCallback />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:slug" element={<BlogDetail />} />
@@ -115,6 +120,7 @@ function App() {
           <Route path="/student/course/:courseId" element={<ProtectedRoute><StudentCourseView /></ProtectedRoute>} />
           <Route path="/student/course/:courseId/chat" element={<ProtectedRoute><CourseChatPage /></ProtectedRoute>} />
           <Route path="/student/bookmark" element={<ProtectedRoute><Bookmark /></ProtectedRoute>} />
+          <Route path="/student/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
           <Route path="/student/helpdesk" element={<ProtectedRoute><Helpdesk /></ProtectedRoute>} />
           <Route path="/student/analysis" element={<ProtectedRoute><Analysis /></ProtectedRoute>} />
           <Route path="/student/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
