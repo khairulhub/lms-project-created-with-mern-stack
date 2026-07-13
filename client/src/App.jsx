@@ -24,6 +24,7 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import EnrolledCourses from "./pages/student/EnrolledCourses";
 import Bookmark from "./pages/student/Bookmark";
 import Wishlist from "./pages/student/Wishlist";
+import PaymentHistory from "./pages/student/PaymentHistory";
 import Helpdesk from "./pages/student/Helpdesk";
 import CourseChatPage from "./pages/student/CourseChatPage";
 import Analysis from "./pages/student/Analysis";
@@ -47,6 +48,7 @@ import InstructorProfile from "./pages/instructor/InstructorProfile";
 import InstructorCourses from "./pages/instructor/InstructorCourses";
 import InstructorAnnouncements from "./pages/instructor/InstructorAnnouncements";
 import InstructorSessions from "./pages/instructor/InstructorSessions";
+import InstructorDiscussions from "./pages/instructor/InstructorDiscussions";
 import InstructorMessages from "./pages/instructor/InstructorMessages";
 
 // Admin
@@ -59,6 +61,7 @@ import AdminProfile from "./pages/admin/AdminProfile";
 import AdminNavMenu from "./pages/admin/AdminNavMenu";
 import AdminCourseHeroSection from "./pages/admin/AdminCourseHeroSection";
 import AdminCoursePaymentMethod from "./pages/admin/AdminCoursePaymentMethod";
+import AdminPaymentGateway from "./pages/admin/AdminPaymentGateway";
 import AdminCourseHighlights from "./pages/admin/AdminCourseHighlights";
 import AdminCourseVideo from "./pages/admin/AdminCourseVideo";
 import AdminCourseWhatYouLearn from "./pages/admin/AdminCourseWhatYouLearn";
@@ -73,6 +76,8 @@ import AdminCourses from "./pages/admin/AdminCourses";
 import AdminStudentCourseReviews from "./pages/admin/AdminStudentCourseReviews";
 import AdminInstructorReviews from "./pages/admin/AdminInstructorReviews";
 import AdminCoupons from "./pages/admin/AdminCoupons";
+import AdminCouponAnalytics from "./pages/admin/AdminCouponAnalytics";
+import AdminTransactions from "./pages/admin/AdminTransactions";
 
 import AdminEnrollments from "./pages/admin/AdminEnrollments";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncements";
@@ -121,6 +126,7 @@ function App() {
           <Route path="/student/course/:courseId/chat" element={<ProtectedRoute><CourseChatPage /></ProtectedRoute>} />
           <Route path="/student/bookmark" element={<ProtectedRoute><Bookmark /></ProtectedRoute>} />
           <Route path="/student/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+          <Route path="/student/payments" element={<ProtectedRoute><PaymentHistory /></ProtectedRoute>} />
           <Route path="/student/helpdesk" element={<ProtectedRoute><Helpdesk /></ProtectedRoute>} />
           <Route path="/student/analysis" element={<ProtectedRoute><Analysis /></ProtectedRoute>} />
           <Route path="/student/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
@@ -142,6 +148,7 @@ function App() {
           <Route path="/instructor/courses"   element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorCourses /></ProtectedRoute>} />
           <Route path="/instructor/announcements" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorAnnouncements /></ProtectedRoute>} />
           <Route path="/instructor/sessions" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorSessions /></ProtectedRoute>} />
+          <Route path="/instructor/discussions" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorDiscussions /></ProtectedRoute>} />
           <Route path="/instructor/messages" element={<ProtectedRoute allowedRoles={["instructor","admin"]}><InstructorMessages /></ProtectedRoute>} />
 
           {/* ── ADMIN ────────────────────────────────── */}
@@ -152,6 +159,7 @@ function App() {
           <Route path="/admin/courses"    element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourses /></ProtectedRoute>} />
           <Route path="/admin/blogs" element={<ProtectedRoute allowedRoles={["admin"]}><AdminBlogs /></ProtectedRoute>} />
           <Route path="/admin/coupons" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCoupons /></ProtectedRoute>} />
+          <Route path="/admin/coupons/analytics" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCouponAnalytics /></ProtectedRoute>} />
           <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProfile /></ProtectedRoute>} />
           <Route path="/admin/navbar" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNavMenu /></ProtectedRoute>} />
           <Route path="/admin/course-details/hero-section" element={<ProtectedRoute allowedRoles={["admin"]}><AdminCourseHeroSection /></ProtectedRoute>} />
@@ -173,6 +181,8 @@ function App() {
 
 
           <Route path="/admin/enrollments" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEnrollments /></ProtectedRoute>} />
+          <Route path="/admin/payment-gateway" element={<ProtectedRoute allowedRoles={["admin"]}><AdminPaymentGateway /></ProtectedRoute>} />
+          <Route path="/admin/transactions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminTransactions /></ProtectedRoute>} />
           <Route path="/admin/announcements" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAnnouncements /></ProtectedRoute>} />
           <Route path="/admin/sessions" element={<ProtectedRoute allowedRoles={["admin"]}><AdminSessions /></ProtectedRoute>} />
           <Route path="/admin/helpdesk" element={<ProtectedRoute allowedRoles={["admin"]}><AdminHelpdesk /></ProtectedRoute>} />

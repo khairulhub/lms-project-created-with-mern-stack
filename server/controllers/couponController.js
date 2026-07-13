@@ -208,6 +208,61 @@ const deleteCoupon = async (req, res) => {
   }
 };
 
+// ─── ADMIN: coupon analytics — koto revenue/discount hoyeche, kon coupon
+// koto approved enrollment e use hoyeche (Enrollment.couponCode diye join) ──
+const getCouponAnalytics = async (req, res) => {
+  try {
+    const Enrollment = require("../models/Enrollment");
+
+    const [coupons, usageStats] = await Promise.all([
+      Coupon.find().populate("applicableTo", "title").sort({ createdAt: -1 }).lean(),
+      Enrollment.aggregate([
+        { $match: { status: "approved", couponCode: { $ne: "" } } },
+        {
+          $group: {
+            _id: "$couponCode",
+            approvedUses: { $sum: 1 },
+            totalDiscountGiven: { $sum: "$discountAmount" },
+            totalRevenue: { $sum: "$amountPaid" },
+          },
+        },
+      ]),
+    ]);
+
+    const statsByCode = new Map(usageStats.map((s) => [s._id, s]));
+
+    const analytics = coupons.map((c) => {
+      const stat = statsByCode.get(c.code);
+      return {
+        _id: c._id,
+        code: c.code,
+        discountType: c.discountType,
+        discountValue: c.discountValue,
+        isActive: c.isActive,
+        maxUses: c.maxUses,
+        usedCount: c.usedCount,
+        approvedUses: stat?.approvedUses || 0,
+        totalDiscountGiven: stat?.totalDiscountGiven || 0,
+        totalRevenue: stat?.totalRevenue || 0,
+        validTill: c.validTill,
+      };
+    });
+
+    const summary = {
+      totalCoupons: coupons.length,
+      activeCoupons: coupons.filter((c) => c.isActive).length,
+      totalApprovedUses: usageStats.reduce((sum, s) => sum + s.approvedUses, 0),
+      totalDiscountGiven: usageStats.reduce((sum, s) => sum + s.totalDiscountGiven, 0),
+      totalRevenueFromCoupons: usageStats.reduce((sum, s) => sum + s.totalRevenue, 0),
+    };
+
+    res.json({ summary, coupons: analytics });
+  } catch (err) {
+    console.error("getCouponAnalytics error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   validateCoupon,
   getAllCoupons,
@@ -216,4 +271,5 @@ module.exports = {
   updateCoupon,
   toggleCoupon,
   deleteCoupon,
+  getCouponAnalytics,
 };

@@ -1,7 +1,8 @@
 const Enrollment = require("../models/Enrollment");
 const Course = require("../models/Course");
 const Coupon = require("../models/Coupon");
-const { sendEnrollmentApprovedEmail, sendEnrollmentRejectedEmail } = require("../config/mailer");
+const { sendEnrollmentApprovedEmail, sendEnrollmentRejectedEmail, sendEnrollmentRevokedEmail, sendInvoiceEmail } = require("../config/mailer");
+const { generateInvoicePdfBuffer } = require("../utils/invoicePdf");
 
 // ─── STUDENT: Enroll করার request submit ─────────────────────────────────────
 // POST /api/enrollments
@@ -118,7 +119,7 @@ const getAllEnrollments = async (req, res) => {
   try {
     const { status } = req.query;
     const filter = {};
-    if (status && ["pending", "approved", "rejected"].includes(status)) {
+    if (status && ["pending", "approved", "rejected", "revoked"].includes(status)) {
       filter.status = status;
     }
 
@@ -150,11 +151,19 @@ const reviewEnrollment = async (req, res) => {
       return res.status(404).json({ message: "Enrollment পাওয়া যায়নি।" });
     }
 
+    const wasAlreadyApproved = enrollment.status === "approved"; // guard against double-count on re-save
     enrollment.status = action === "approve" ? "approved" : "rejected";
     enrollment.adminNote = adminNote || "";
     enrollment.reviewedAt = new Date();
     enrollment.reviewedBy = req.user._id;
     await enrollment.save();
+
+    // Coupon usedCount এতদিন কোথাও increment হতো না (maxUses limit কোনোদিনই
+    // কাজ করছিল না) — approve হলেই এখন এক ধাপ বাড়বে, analytics-ও এর উপর নির্ভর করে
+    if (action === "approve" && !wasAlreadyApproved && enrollment.couponCode) {
+      Coupon.updateOne({ code: enrollment.couponCode }, { $inc: { usedCount: 1 } })
+        .catch((e) => console.error("Coupon usedCount update failed:", e.message));
+    }
 
     const populated = await enrollment.populate([
       { path: "user", select: "name email" },
@@ -174,6 +183,28 @@ const reviewEnrollment = async (req, res) => {
             reason: adminNote || "",
           });
       emailPromise.catch((e) => console.error("Enrollment review email failed:", e.message));
+
+      // Manual (bKash/Nagad screenshot) approve howar somoyo invoice pathai —
+      // SSLCommerz auto-approve flow-er moto same behavior, consistency-r jonno
+      if (action === "approve") {
+        generateInvoicePdfBuffer({
+          invoiceId: enrollment.transactionId || enrollment._id.toString(),
+          studentName: populated.user.name,
+          studentEmail: populated.user.email,
+          courseTitle: populated.course?.title || "Course",
+          amount: enrollment.amountPaid,
+          discountAmount: enrollment.discountAmount || 0,
+          paymentMethod: enrollment.paymentMethod,
+          transactionId: enrollment.transactionId,
+          date: enrollment.reviewedAt,
+        })
+          .then((pdfBuffer) => sendInvoiceEmail(populated.user.email, {
+            studentName: populated.user.name,
+            courseTitle: populated.course?.title || "Course",
+            invoiceId: enrollment.transactionId || enrollment._id.toString(),
+          }, pdfBuffer))
+          .catch((e) => console.error("Invoice email failed:", e.message));
+      }
     }
 
     res.json({
@@ -207,10 +238,11 @@ const deleteEnrollment = async (req, res) => {
 // GET /api/admin/enrollments/stats
 const getEnrollmentStats = async (req, res) => {
   try {
-    const [pending, approved, rejected, revenueAgg, uniqueStudents] = await Promise.all([
+    const [pending, approved, rejected, revoked, revenueAgg, uniqueStudents] = await Promise.all([
       Enrollment.countDocuments({ status: "pending" }),
       Enrollment.countDocuments({ status: "approved" }),
       Enrollment.countDocuments({ status: "rejected" }),
+      Enrollment.countDocuments({ status: "revoked" }),
       Enrollment.aggregate([
         { $match: { status: "approved" } },
         { $group: { _id: null, total: { $sum: "$amountPaid" } } },
@@ -221,12 +253,96 @@ const getEnrollmentStats = async (req, res) => {
       pending,
       approved,
       rejected,
-      total: pending + approved + rejected,
+      revoked,
+      total: pending + approved + rejected + revoked,
       totalRevenue: revenueAgg[0]?.total || 0,
       uniqueStudents: uniqueStudents.length,
     });
   } catch (error) {
     console.error("getEnrollmentStats error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ─── ADMIN: approved enrollment revoke করা — refund/policy violation ইত্যাদি
+// কারণে student এর access বন্ধ করে দেওয়া। PUT /api/admin/enrollments/:id/revoke
+const revokeEnrollment = async (req, res) => {
+  try {
+    const { reason, markRefunded } = req.body;
+    const enrollment = await Enrollment.findById(req.params.id);
+    if (!enrollment) return res.status(404).json({ message: "Enrollment পাওয়া যায়নি।" });
+    if (enrollment.status !== "approved") {
+      return res.status(400).json({ message: "শুধু approved enrollment revoke করা যাবে।" });
+    }
+
+    enrollment.status = "revoked";
+    enrollment.revokedAt = new Date();
+    enrollment.revokedBy = req.user._id;
+    enrollment.revokeReason = reason || "";
+    if (markRefunded) enrollment.refundStatus = "refunded";
+    await enrollment.save();
+
+    const populated = await enrollment.populate([
+      { path: "user", select: "name email" },
+      { path: "course", select: "title" },
+    ]);
+
+    if (populated.user?.email) {
+      sendEnrollmentRevokedEmail(populated.user.email, {
+        studentName: populated.user.name,
+        courseTitle: populated.course?.title || "কোর্স",
+        reason: reason || "",
+        refunded: !!markRefunded,
+      }).catch((e) => console.error("Revoke email failed:", e.message));
+    }
+
+    res.json({ message: "Enrollment revoke করা হয়েছে।", enrollment: populated });
+  } catch (error) {
+    console.error("revokeEnrollment error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ─── ADMIN: refund processing-এর জন্য payment details — কোন নম্বরে/কোন
+// method এ টাকা এসেছে সব এক জায়গায়, যাতে admin manually bKash/Nagad/bank
+// থেকে টাকা ফেরত পাঠাতে পারে। GET /api/admin/enrollments/:id/payment-details
+const getEnrollmentPaymentDetails = async (req, res) => {
+  try {
+    const enrollment = await Enrollment.findById(req.params.id).populate("user", "name email phone");
+    if (!enrollment) return res.status(404).json({ message: "Enrollment পাওয়া যায়নি।" });
+
+    // SSLCommerz দিয়ে হলে PaymentTransaction-এ আসল gateway data (masked
+    // account number সহ) থাকে — manual bKash/Nagad হলে enrollment-এই সব আছে
+    if (enrollment.paymentMethod === "SSLCommerz") {
+      const PaymentTransaction = require("../models/PaymentTransaction");
+      const txn = await PaymentTransaction.findOne({ enrollment: enrollment._id });
+      return res.json({
+        method: "SSLCommerz",
+        walletOrCardType: txn?.cardType || "জানা যায়নি",
+        accountNumber: txn?.cardNo || "জানা যায়নি (masked number gateway পাঠায়নি)",
+        transactionId: txn?.tranId || enrollment.transactionId,
+        bankTransactionId: txn?.bankTranId || "",
+        amount: txn?.amount ?? enrollment.amountPaid,
+        studentContact: { name: enrollment.user?.name, email: enrollment.user?.email, phone: enrollment.user?.phone },
+        screenshotUrl: null,
+        note: "SSLCommerz gateway-এর মাধ্যমে পেমেন্ট হয়েছে। উপরের account number-এ manually refund পাঠাও (bKash/Nagad হলে ওই নম্বরে, card হলে bank-কে জানাতে হতে পারে)।",
+      });
+    }
+
+    // Manual flow (bKash/Nagad/Rocket) — student নিজে transaction ID টাইপ করেছিল, screenshot দিয়েছিল
+    return res.json({
+      method: enrollment.paymentMethod || "Manual",
+      walletOrCardType: enrollment.paymentMethod || "Manual",
+      accountNumber: "student এর নিজস্ব " + (enrollment.paymentMethod || "") + " নম্বর — screenshot/student profile থেকে দেখো",
+      transactionId: enrollment.transactionId,
+      bankTransactionId: "",
+      amount: enrollment.amountPaid,
+      studentContact: { name: enrollment.user?.name, email: enrollment.user?.email, phone: enrollment.user?.phone },
+      screenshotUrl: enrollment.screenshotUrl || null,
+      note: "Manual পেমেন্ট — student এর দেওয়া transaction ID আর screenshot verify করে সেই নম্বরেই bKash/Nagad/Rocket দিয়ে manually refund পাঠাও। student এর phone number থাকলে সরাসরি যোগাযোগও করতে পারো।",
+    });
+  } catch (error) {
+    console.error("getEnrollmentPaymentDetails error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -237,6 +353,8 @@ module.exports = {
   checkEnrollment,
   getAllEnrollments,
   reviewEnrollment,
+  revokeEnrollment,
+  getEnrollmentPaymentDetails,
   deleteEnrollment,
   getEnrollmentStats,
 };

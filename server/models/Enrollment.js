@@ -54,8 +54,19 @@ const enrollmentSchema = new mongoose.Schema(
     // rejected → admin reject করেছে
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "approved", "rejected", "revoked"],
       default: "pending",
+    },
+    // Admin approved enrollment পরে revoke করলে (refund/policy violation ইত্যাদি)
+    revokedAt: { type: Date, default: null },
+    revokedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    revokeReason: { type: String, default: "" },
+    // টাকা ফেরত দেওয়া হয়েছে কিনা — actual gateway refund admin manually করে
+    // (bank/bKash/SSLCommerz panel থেকে), এখানে শুধু record রাখা হয়
+    refundStatus: {
+      type: String,
+      enum: ["none", "refunded"],
+      default: "none",
     },
     // Admin reject করলে কারণ জানাতে পারবে
     adminNote: {

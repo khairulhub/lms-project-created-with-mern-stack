@@ -30,6 +30,14 @@ const STATUS_BADGE = {
       border: "1px solid rgba(239,68,68,0.3)",
     },
   },
+  revoked: {
+    label: "Access Revoked 🚫",
+    style: {
+      background: "rgba(148,163,184,0.12)",
+      color: "#cbd5e1",
+      border: "1px solid rgba(148,163,184,0.3)",
+    },
+  },
 };
 
 const EnrolledCourses = () => {
@@ -50,6 +58,7 @@ const EnrolledCourses = () => {
     approved: enrollments.filter((e) => e.status === "approved").length,
     pending: enrollments.filter((e) => e.status === "pending").length,
     rejected: enrollments.filter((e) => e.status === "rejected").length,
+    revoked: enrollments.filter((e) => e.status === "revoked").length,
   };
 
   return (
@@ -66,6 +75,7 @@ const EnrolledCourses = () => {
             { key: "approved", label: `Active (${counts.approved})` },
             { key: "pending", label: `Pending (${counts.pending})` },
             { key: "rejected", label: `Rejected (${counts.rejected})` },
+            { key: "revoked", label: `Revoked (${counts.revoked})` },
           ].map(({ key, label }) => (
             <button
               key={key}
@@ -220,6 +230,11 @@ const EnrollmentCard = ({ enrollment }) => {
       {/* Admin note for rejected */}
       {status === "rejected" && adminNote && (
         <p className="text-xs text-red-300 mt-1">কারণ: {adminNote}</p>
+      )}
+
+      {/* Revoke reason for revoked */}
+      {status === "revoked" && enrollment.revokeReason && (
+        <p className="text-xs mt-1" style={{ color: "#cbd5e1" }}>কারণ: {enrollment.revokeReason}</p>
       )}
 
       {/* Continue learning CTA (approved only) */}

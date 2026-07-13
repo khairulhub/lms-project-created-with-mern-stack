@@ -5,9 +5,11 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
+import { FiTrash2 } from "react-icons/fi";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
+import { useAuth } from "../../contexts/AuthContext";
 
 // ── helpers ──────────────────────────────────────────────────────────────
 const isYouTube = (url = "") =>
@@ -44,7 +46,7 @@ const flattenCurriculum = (curriculum = []) => {
   const flat = [];
   curriculum.forEach((section, si) => {
     (section.lectures || []).forEach((lec, li) => {
-      flat.push({ ...lec, sectionIndex: si, lectureIndex: li, globalIndex: flat.length });
+      flat.push({ ...lec, sectionId: section._id, sectionIndex: si, lectureIndex: li, globalIndex: flat.length });
     });
   });
   return flat;
@@ -146,7 +148,159 @@ const VideoPlayer = ({ lecture, onEnded }) => {
 
 // ── LectureTabs: Copyright Warning · Conceptual Session · Notes ──────────
 // ছবির মতো: video এর নিচে ৩টা tab — Copyright Warning (লাল dot), Conceptual Session, Notes
-const LectureTabs = ({ activeLecture, isLectureDone, onMarkComplete }) => {
+// ── Discussion (per-lecture Q&A) — Course Chat থেকে আলাদা: এটা public,
+// একই course-এর সব student একে অপরের প্রশ্ন দেখতে/উত্তর দিতে পারে ──────────
+const DiscussionPanel = ({ courseId, lecture }) => {
+  const { user } = useAuth();
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [question, setQuestion] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [replyDrafts, setReplyDrafts] = useState({}); // discussionId → text
+  const [replyingId, setReplyingId] = useState(null);
+
+  const load = useCallback(() => {
+    if (!lecture?._id) return;
+    setLoading(true);
+    api.get(`/discussions/lecture/${lecture._id}`, { params: { courseId } })
+      .then(({ data }) => setItems(data || []))
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [courseId, lecture?._id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleAsk = async (e) => {
+    e.preventDefault();
+    if (!question.trim()) return;
+    setPosting(true);
+    try {
+      await api.post("/discussions", {
+        courseId, sectionId: lecture.sectionId, lectureId: lecture._id,
+        lectureTitle: lecture.title, question: question.trim(),
+      });
+      setQuestion("");
+      load();
+    } catch {
+      toast.error("প্রশ্ন পোস্ট করা যায়নি।");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handleReply = async (id) => {
+    const text = (replyDrafts[id] || "").trim();
+    if (!text) return;
+    setReplyingId(id);
+    try {
+      await api.post(`/discussions/${id}/reply`, { message: text });
+      setReplyDrafts((prev) => ({ ...prev, [id]: "" }));
+      load();
+    } catch {
+      toast.error("Reply পাঠানো যায়নি।");
+    } finally {
+      setReplyingId(null);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/discussions/${id}`);
+      setItems((prev) => prev.filter((d) => d._id !== id));
+    } catch {
+      toast.error("মুছতে সমস্যা হয়েছে।");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={handleAsk} className="flex gap-2">
+        <input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="এই lecture নিয়ে প্রশ্ন করো..."
+          className="flex-1 bg-transparent border rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none"
+          style={{ borderColor: "rgba(255,255,255,0.12)" }}
+        />
+        <button type="submit" disabled={posting || !question.trim()}
+          className="px-4 py-2 rounded-xl text-xs font-bold text-white disabled:opacity-50"
+          style={{ background: "linear-gradient(90deg,#7c3aed,#06b6d4)" }}>
+          {posting ? "..." : "জিজ্ঞাসা করো"}
+        </button>
+      </form>
+
+      {loading ? (
+        <p className="text-gray-500 text-xs text-center py-6">লোড হচ্ছে...</p>
+      ) : items.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-2xl mb-2">💬</p>
+          <p className="text-gray-500 text-sm">এই lecture নিয়ে এখনো কোনো প্রশ্ন নেই — প্রথম প্রশ্নটা তুমিই করো!</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((d) => (
+            <div key={d._id} className="rounded-xl p-3.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-white text-xs font-semibold truncate">{d.user?.name || "Student"}</span>
+                  {d.user?.role !== "user" && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0" style={{ background: "rgba(124,58,237,0.2)", color: "#c084fc" }}>
+                      {d.user?.role}
+                    </span>
+                  )}
+                  {d.resolved && <span className="text-[10px] text-emerald-400 shrink-0">✓ Resolved</span>}
+                </div>
+                {(String(d.user?._id) === String(user?._id) || user?.role === "admin") && (
+                  <button onClick={() => handleDelete(d._id)} className="text-gray-600 hover:text-red-400 text-xs shrink-0">
+                    <FiTrash2 size={12} />
+                  </button>
+                )}
+              </div>
+              <p className="text-gray-200 text-sm mt-1.5">{d.question}</p>
+
+              {d.replies?.length > 0 && (
+                <div className="mt-3 pl-3 space-y-2" style={{ borderLeft: "2px solid rgba(255,255,255,0.08)" }}>
+                  {d.replies.map((r, i) => (
+                    <div key={i}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold" style={{ color: r.senderRole === "user" ? "#93c5fd" : "#c084fc" }}>
+                          {r.sender?.name || "User"}
+                        </span>
+                        {r.senderRole !== "user" && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.2)", color: "#c084fc" }}>
+                            {r.senderRole}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-gray-300 text-xs mt-0.5">{r.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2 mt-3">
+                <input
+                  value={replyDrafts[d._id] || ""}
+                  onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [d._id]: e.target.value }))}
+                  placeholder="উত্তর লেখো..."
+                  className="flex-1 bg-transparent border rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none"
+                  style={{ borderColor: "rgba(255,255,255,0.1)" }}
+                />
+                <button onClick={() => handleReply(d._id)} disabled={replyingId === d._id || !(replyDrafts[d._id] || "").trim()}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-40"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "#d1d5db" }}>
+                  Reply
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const LectureTabs = ({ activeLecture, isLectureDone, onMarkComplete, courseId }) => {
   const [activeTab, setActiveTab] = useState("notes");
 
   // Tab সুইচ হলে রিসেট করো না, শুধু active tab পরিবর্তন করো
@@ -154,6 +308,7 @@ const LectureTabs = ({ activeLecture, isLectureDone, onMarkComplete }) => {
     { key: "copyright", label: "Copyright Warning", dot: true },
     { key: "conceptual", label: "Conceptual Session" },
     { key: "notes", label: "Notes" },
+    { key: "discussion", label: "💬 Discussion" },
   ];
 
   return (
@@ -322,6 +477,10 @@ const LectureTabs = ({ activeLecture, isLectureDone, onMarkComplete }) => {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === "discussion" && activeLecture && (
+          <DiscussionPanel courseId={courseId} lecture={activeLecture} />
         )}
       </div>
     </div>
@@ -1168,6 +1327,7 @@ const StudentCourseView = () => {
                 activeLecture={activeLecture}
                 isLectureDone={isLectureDone}
                 onMarkComplete={() => markCompleted(activeLecture)}
+                courseId={courseId}
               />
             </>
           )}

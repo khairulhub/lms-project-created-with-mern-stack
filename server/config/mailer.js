@@ -110,12 +110,51 @@ const sendPaymentConfirmedEmail = (toEmail, { studentName, courseTitle, amount }
     `
   );
 
+// ── Invoice email — PDF buffer attach kore pathano hoy, payment/enrollment
+// confirm howar por (kono blocking effect nei — fail korle log hoy, action
+// atke thake na, caller-e try/catch/.catch() diye call kora hoy) ──────────
+const sendInvoiceEmail = async (toEmail, { studentName, courseTitle, invoiceId }, pdfBuffer) => {
+  const mailOptions = {
+    from: `"LMS Platform" <${process.env.GMAIL_USER}>`,
+    to: toEmail,
+    subject: `🧾 তোমার Invoice — ${courseTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #0f172a; color: #f1f5f9; padding: 32px; border-radius: 16px;">
+        <h2 style="color: #22d3ee; margin-bottom: 8px;">Payment Invoice</h2>
+        <p style="color: #94a3b8;">${studentName}, তোমার <strong style="color:#f1f5f9;">${courseTitle}</strong> কোর্সের পেমেন্ট invoice এই ইমেইলে attach করা আছে (Invoice ID: ${invoiceId})।</p>
+        <p style="color: #64748b; font-size: 12px; margin-top: 24px; border-top: 1px solid #334155; padding-top: 16px;">
+          এই ইমেইলটা LMS Platform থেকে automatically পাঠানো হয়েছে।
+        </p>
+      </div>
+    `,
+    attachments: pdfBuffer
+      ? [{ filename: `invoice-${invoiceId}.pdf`, content: pdfBuffer, contentType: "application/pdf" }]
+      : [],
+  };
+  await transporter.sendMail(mailOptions);
+};
+
+const sendEnrollmentRevokedEmail = (toEmail, { studentName, courseTitle, reason, refunded }) =>
+  sendEmail(
+    toEmail,
+    `তোমার "${courseTitle}" কোর্সের access বন্ধ করা হয়েছে`,
+    `
+      <h2 style="color: #f87171; margin-bottom: 8px;">Enrollment Access Revoked</h2>
+      <p style="color: #94a3b8;">${studentName}, তোমার <strong style="color:#f1f5f9;">${courseTitle}</strong> কোর্সের access admin বন্ধ করে দিয়েছেন।</p>
+      ${reason ? `<p style="color:#94a3b8;">কারণ: <span style="color:#f1f5f9;">${reason}</span></p>` : ""}
+      ${refunded ? `<p style="color:#4ade80;">তোমার টাকা refund করা হয়েছে।</p>` : ""}
+      <p style="color: #94a3b8;">প্রশ্ন থাকলে Helpdesk থেকে ticket খুলে জানাতে পারো।</p>
+    `
+  );
+
 module.exports = {
   sendOTPEmail,
   sendEmail,
   sendEnrollmentApprovedEmail,
   sendEnrollmentRejectedEmail,
+  sendEnrollmentRevokedEmail,
   sendTicketReplyEmail,
   sendCertificateIssuedEmail,
   sendPaymentConfirmedEmail,
+  sendInvoiceEmail,
 };

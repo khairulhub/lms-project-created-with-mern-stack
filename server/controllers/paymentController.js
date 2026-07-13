@@ -1,27 +1,38 @@
 const asyncHandler = require("express-async-handler");
 const PaymentTransaction = require("../models/PaymentTransaction");
+const PaymentGatewaySettings = require("../models/PaymentGatewaySettings");
 const Enrollment = require("../models/Enrollment");
 const Course = require("../models/Course");
 const Coupon = require("../models/Coupon");
 const User = require("../models/User");
-const { sendPaymentConfirmedEmail } = require("../config/mailer");
+const { sendPaymentConfirmedEmail, sendInvoiceEmail } = require("../config/mailer");
+const { generateInvoicePdfBuffer } = require("../utils/invoicePdf");
 
-// ─── SSLCommerz config — sandbox by default, .env এ SSLCOMMERZ_IS_LIVE=true
-// দিলে live gateway তে switch হবে। BD-তে SSLCommerz একটাই aggregator
-// integration দিয়ে bKash/Nagad/Rocket/card/net-banking সবগুলো cover করে —
-// তাই আলাদাভাবে প্রতিটা mobile-banking এর নিজস্ব merchant API লাগে না ────────
-const isLive = process.env.SSLCOMMERZ_IS_LIVE === "true";
-const SSL_INIT_URL = isLive
-  ? "https://securepay.sslcommerz.com/gwprocess/v4/api.php"
-  : "https://sandbox.sslcommerz.com/gwprocess/v4/api.php";
-const SSL_VALIDATION_URL = isLive
-  ? "https://securepay.sslcommerz.com/validator/api/validationserverAPI.php"
-  : "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php";
-
-const STORE_ID = process.env.SSLCOMMERZ_STORE_ID;
-const STORE_PASSWD = process.env.SSLCOMMERZ_STORE_PASSWD;
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+
+// ─── Gateway config — admin panel (DB, PaymentGatewaySettings) কে সবসময়
+// priority দেয়, DB এ কিছু set করা না থাকলে .env এ fallback করে। এভাবে site
+// বিক্রি করার পরে নতুন owner কোড/`.env` টাচ না করেই admin panel থেকে নিজের
+// Store ID/Password/Live-Test বসাতে পারবে ───────────────────────────────────
+const getGatewayConfig = async () => {
+  const settings = await PaymentGatewaySettings.findOne().lean();
+  const storeId = settings?.sslStoreId || process.env.SSLCOMMERZ_STORE_ID || "";
+  const storePasswd = settings?.sslStorePasswd || process.env.SSLCOMMERZ_STORE_PASSWD || "";
+  const isLive = settings ? !!settings.isLive : process.env.SSLCOMMERZ_IS_LIVE === "true";
+
+  return {
+    storeId,
+    storePasswd,
+    isLive,
+    initUrl: isLive
+      ? "https://securepay.sslcommerz.com/gwprocess/v4/api.php"
+      : "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
+    validationUrl: isLive
+      ? "https://securepay.sslcommerz.com/validator/api/validationserverAPI.php"
+      : "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php",
+  };
+};
 
 // course price + coupon মিলিয়ে final amount বের করা — enrollmentController-এর
 // manual flow যেভাবে হিসাব করে, এখানেও একই নিয়ম মানা হলো
@@ -39,12 +50,53 @@ const computeFinalAmount = async (course, couponCode) => {
   return { finalAmount, discountAmount };
 };
 
-// ─── STUDENT: payment session শুরু করা ───────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// ADMIN: Gateway settings — Store ID/Password/Live-Test toggle
+// ══════════════════════════════════════════════════════════════════════════
+
+// GET /api/admin/payment-settings
+const getGatewaySettings = asyncHandler(async (req, res) => {
+  let settings = await PaymentGatewaySettings.findOne();
+  if (!settings) {
+    // kokhono set kora hoyni — empty defaults + .env e kichu ache kina seta janai
+    return res.json({
+      sslStoreId: "",
+      sslStorePasswd: "",
+      isLive: process.env.SSLCOMMERZ_IS_LIVE === "true",
+      usingEnvFallback: !!(process.env.SSLCOMMERZ_STORE_ID && process.env.SSLCOMMERZ_STORE_PASSWD),
+    });
+  }
+  res.json({ ...settings.toObject(), usingEnvFallback: false });
+});
+
+// PUT /api/admin/payment-settings  { sslStoreId, sslStorePasswd, isLive }
+const updateGatewaySettings = asyncHandler(async (req, res) => {
+  const { sslStoreId, sslStorePasswd, isLive } = req.body;
+
+  let settings = await PaymentGatewaySettings.findOne();
+  if (!settings) settings = new PaymentGatewaySettings();
+
+  if (sslStoreId !== undefined) settings.sslStoreId = sslStoreId.trim();
+  // Password field blank pathale purono value-i thakbe (jate re-save korar
+  // somoy accidentally clear na hoye jay, jehetu UI te eta masked thake)
+  if (sslStorePasswd !== undefined && sslStorePasswd.trim()) settings.sslStorePasswd = sslStorePasswd.trim();
+  if (isLive !== undefined) settings.isLive = !!isLive;
+  settings.updatedBy = req.user._id;
+
+  await settings.save();
+  res.json({ message: "Payment gateway settings save হয়েছে।", settings });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// STUDENT: payment flow
+// ══════════════════════════════════════════════════════════════════════════
+
 // POST /api/payments/sslcommerz/init  { courseId, couponCode }
 const initiatePayment = asyncHandler(async (req, res) => {
-  if (!STORE_ID || !STORE_PASSWD) {
+  const gw = await getGatewayConfig();
+  if (!gw.storeId || !gw.storePasswd) {
     return res.status(500).json({
-      message: "Payment gateway এখনো configure করা হয়নি। .env এ SSLCOMMERZ_STORE_ID আর SSLCOMMERZ_STORE_PASSWD দাও (sandbox account লাগবে sslcommerz.com থেকে)।",
+      message: "Payment gateway এখনো configure করা হয়নি। Admin কে Payment Gateway settings থেকে SSLCommerz credentials বসাতে বলো।",
     });
   }
 
@@ -75,8 +127,8 @@ const initiatePayment = asyncHandler(async (req, res) => {
   });
 
   const payload = {
-    store_id: STORE_ID,
-    store_passwd: STORE_PASSWD,
+    store_id: gw.storeId,
+    store_passwd: gw.storePasswd,
     total_amount: finalAmount > 0 ? finalAmount : 10, // SSLCommerz sandbox 0 amount নেয় না
     currency: "BDT",
     tran_id: tranId,
@@ -98,7 +150,7 @@ const initiatePayment = asyncHandler(async (req, res) => {
 
   let data;
   try {
-    const response = await fetch(SSL_INIT_URL, {
+    const response = await fetch(gw.initUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams(payload).toString(),
@@ -125,10 +177,11 @@ const finalizeTransaction = async (tranId, valId) => {
   if (!txn) return { ok: false };
   if (txn.status === "success") return { ok: true, courseId: txn.course }; // already processed
 
-  const params = new URLSearchParams({ val_id: valId, store_id: STORE_ID, store_passwd: STORE_PASSWD, format: "json" });
+  const gw = await getGatewayConfig();
+  const params = new URLSearchParams({ val_id: valId, store_id: gw.storeId, store_passwd: gw.storePasswd, format: "json" });
   let vData;
   try {
-    const vRes = await fetch(`${SSL_VALIDATION_URL}?${params.toString()}`);
+    const vRes = await fetch(`${gw.validationUrl}?${params.toString()}`);
     vData = await vRes.json();
   } catch (err) {
     console.error("SSLCommerz validation call failed:", err.message);
@@ -146,7 +199,8 @@ const finalizeTransaction = async (tranId, valId) => {
   txn.status = "success";
   txn.valId = valId;
   txn.bankTranId = vData.bank_tran_id || "";
-  txn.cardType = vData.card_type || "";
+  txn.cardType = vData.card_type || ""; // mobile banking hole eikhane "bKash"/"Nagad"/"Rocket" thake, card hole "VISA-BankName"
+  txn.cardNo = vData.card_no || ""; // masked account/card number, e.g. "01712XXXXXX34"
   txn.gatewayRawResponse = vData;
 
   // Enrollment auto তৈরি + approve — manual bKash/Nagad screenshot review এর
@@ -154,6 +208,7 @@ const finalizeTransaction = async (tranId, valId) => {
   let enrollment = await Enrollment.findOne({
     user: txn.user, course: txn.course, status: { $in: ["pending", "approved"] },
   });
+  let newlyApproved = false;
   if (!enrollment) {
     enrollment = await Enrollment.create({
       user: txn.user,
@@ -166,22 +221,48 @@ const finalizeTransaction = async (tranId, valId) => {
       status: "approved",
       reviewedAt: new Date(),
     });
+    newlyApproved = true;
   } else if (enrollment.status !== "approved") {
     enrollment.status = "approved";
     enrollment.reviewedAt = new Date();
     await enrollment.save();
+    newlyApproved = true;
   }
   txn.enrollment = enrollment._id;
   await txn.save();
+
+  if (newlyApproved && txn.couponCode) {
+    Coupon.updateOne({ code: txn.couponCode }, { $inc: { usedCount: 1 } })
+      .catch((e) => console.error("Coupon usedCount update failed:", e.message));
+  }
 
   const [user, course] = await Promise.all([
     User.findById(txn.user).select("name email"),
     Course.findById(txn.course).select("title"),
   ]);
+
   if (user?.email) {
     sendPaymentConfirmedEmail(user.email, {
       studentName: user.name, courseTitle: course?.title || "কোর্স", amount: txn.amount,
     }).catch((e) => console.error("Payment confirm email failed:", e.message));
+
+    // Invoice PDF generate kore email e attach kore pathano — best-effort,
+    // fail korle main enrollment flow atke thake na
+    generateInvoicePdfBuffer({
+      invoiceId: txn.tranId,
+      studentName: user.name,
+      studentEmail: user.email,
+      courseTitle: course?.title || "Course",
+      amount: txn.amount,
+      discountAmount: txn.discountAmount,
+      paymentMethod: "SSLCommerz",
+      transactionId: txn.bankTranId || txn.tranId,
+      date: new Date(),
+    })
+      .then((pdfBuffer) => sendInvoiceEmail(user.email, {
+        studentName: user.name, courseTitle: course?.title || "Course", invoiceId: txn.tranId,
+      }, pdfBuffer))
+      .catch((e) => console.error("Invoice email failed:", e.message));
   }
 
   return { ok: true, courseId: txn.course };
@@ -227,6 +308,62 @@ const getTransactionStatus = asyncHandler(async (req, res) => {
   res.json(txn);
 });
 
+// ─── STUDENT: নিজের সব payment transaction (history) ────────────────────────
+// GET /api/payments/my
+const getMyPayments = asyncHandler(async (req, res) => {
+  const transactions = await PaymentTransaction.find({ user: req.user._id })
+    .populate("course", "title image emoji")
+    .sort({ createdAt: -1 })
+    .lean();
+  res.json(transactions);
+});
+
+// ─── STUDENT: invoice আবার download করা (email হারিয়ে ফেললে) ────────────────
+// GET /api/payments/invoice/:tranId  → PDF stream
+const downloadInvoice = asyncHandler(async (req, res) => {
+  const txn = await PaymentTransaction.findOne({ tranId: req.params.tranId, user: req.user._id })
+    .populate("course", "title")
+    .populate("user", "name email");
+  if (!txn || txn.status !== "success") {
+    return res.status(404).json({ message: "Invoice পাওয়া যায়নি।" });
+  }
+
+  const pdfBuffer = await generateInvoicePdfBuffer({
+    invoiceId: txn.tranId,
+    studentName: txn.user.name,
+    studentEmail: txn.user.email,
+    courseTitle: txn.course?.title || "Course",
+    amount: txn.amount,
+    discountAmount: txn.discountAmount,
+    paymentMethod: "SSLCommerz",
+    transactionId: txn.bankTranId || txn.tranId,
+    date: txn.createdAt,
+  });
+
+  res.set({
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename="invoice-${txn.tranId}.pdf"`,
+  });
+  res.send(pdfBuffer);
+});
+
+// ─── ADMIN: সব payment transaction (success/failed/cancelled/pending সব) —
+// manual bKash/Nagad flow-এ admin শুধু approved enrollment দেখে, কিন্তু এখানে
+// SSLCommerz-এ কেউ payment শুরু করে fail/cancel করলে সেটাও দেখা যাবে (debug-এর জন্য)
+// GET /api/admin/payments?status=success
+const getAllPayments = asyncHandler(async (req, res) => {
+  const { status } = req.query;
+  const filter = status ? { status } : {};
+  const transactions = await PaymentTransaction.find(filter)
+    .populate("user", "name email")
+    .populate("course", "title")
+    .sort({ createdAt: -1 })
+    .limit(500)
+    .lean();
+  res.json(transactions);
+});
+
 module.exports = {
   initiatePayment, paymentSuccess, paymentFail, paymentCancel, paymentIPN, getTransactionStatus,
+  getGatewaySettings, updateGatewaySettings, getMyPayments, downloadInvoice, getAllPayments,
 };

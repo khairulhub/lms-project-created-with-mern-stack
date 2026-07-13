@@ -7,7 +7,7 @@ import { useHelpdesk } from "../../contexts/HelpdeskContext";
 import { useCourseChat } from "../../contexts/CourseChatContext";
 import {
   FiHome, FiUser, FiUsers, FiFileText, FiTag, FiLogOut,
-  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare, FiAward, FiBell, FiVideo, FiHeadphones, FiTrendingUp, FiHeart,
+  FiMenu, FiX, FiCheckCircle, FiGlobe, FiBookOpen, FiChevronDown, FiChevronRight, FiMessageSquare, FiAward, FiBell, FiVideo, FiHeadphones, FiTrendingUp, FiHeart, FiLock, FiMessageCircle, FiCreditCard,
 } from "react-icons/fi";
 
 const DashboardLayout = ({ children, hidePadding = false }) => {
@@ -56,6 +56,8 @@ const DashboardLayout = ({ children, hidePadding = false }) => {
     { to: "/admin/messages", icon: <FiMessageSquare />, label: "Messages", badge: chatUnreadCount },
     { to: "/admin/coupons", icon: <FiTag />, label: "Coupons" },
     { to: "/admin/enrollments", icon: <FiCheckCircle />, label: "Enrollments" },
+    { to: "/admin/payment-gateway", icon: <FiLock />, label: "Payment Gateway" },
+    { to: "/admin/transactions", icon: <FiCreditCard />, label: "Transactions" },
     { to: "/admin/quiz-assignment", icon: <FiAward />, label: "Quiz & Assignment" },
     {
       label: "Reviews",
@@ -92,6 +94,7 @@ const DashboardLayout = ({ children, hidePadding = false }) => {
     { to: "/instructor/courses",   icon: <FiBookOpen />,  label: "My Courses" },
     { to: "/instructor/announcements", icon: <FiBell />, label: "Announcements", badge: unreadCount },
     { to: "/instructor/sessions", icon: <FiVideo />, label: "Sessions" },
+    { to: "/instructor/discussions", icon: <FiMessageCircle />, label: "Discussions" },
     { to: "/instructor/messages", icon: <FiMessageSquare />, label: "Messages", badge: chatUnreadCount },
     { to: "/instructor/blogs",     icon: <FiFileText />,  label: "My Blogs"   },
     { to: "/instructor/profile",   icon: <FiUser />,      label: "My Profile" },
@@ -102,6 +105,7 @@ const DashboardLayout = ({ children, hidePadding = false }) => {
     { to: "/student/enrolled", icon: <FiFileText />, label: "My Classes", badge: chatUnreadCount },
     { to: "/student/bookmark", icon: <FiTag />, label: "Bookmark" },
     { to: "/student/wishlist", icon: <FiHeart />, label: "Wishlist" },
+    { to: "/student/payments", icon: <FiCreditCard />, label: "Payment History" },
     { to: "/student/analysis", icon: <FiTrendingUp />, label: "Analysis" },
     { to: "/student/leaderboard", icon: <FiAward />, label: "Leaderboard" },
     { to: "/student/announcement", icon: <FiBell />, label: "Announcement", badge: unreadCount },

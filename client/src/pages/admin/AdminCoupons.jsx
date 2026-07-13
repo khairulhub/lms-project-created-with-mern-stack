@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import api from "../../utils/api";
 import toast from "react-hot-toast";
@@ -312,13 +313,18 @@ const AdminCoupons = () => {
             কোর্সে ডিসকাউন্ট কুপন তৈরি ও পরিচালনা করো
           </p>
         </div>
-        <button
-          onClick={() => setModal({})}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-sm transition-all hover:scale-105"
-          style={{ background: "linear-gradient(90deg, #7c3aed, #db2777)" }}
-        >
-          <FiPlus size={16} /> নতুন কুপন
-        </button>
+        <div className="flex items-center gap-3">
+          <Link to="/admin/coupons/analytics" className="text-cyan-400 hover:text-cyan-300 text-sm font-medium">
+            📊 Analytics দেখো
+          </Link>
+          <button
+            onClick={() => setModal({})}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-semibold text-sm transition-all hover:scale-105"
+            style={{ background: "linear-gradient(90deg, #7c3aed, #db2777)" }}
+          >
+            <FiPlus size={16} /> নতুন কুপন
+          </button>
+        </div>
       </div>
 
       {/* Stats bar */}

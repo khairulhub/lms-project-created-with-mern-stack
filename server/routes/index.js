@@ -81,6 +81,8 @@ const {
   checkEnrollment,
   getAllEnrollments,
   reviewEnrollment,
+  revokeEnrollment,
+  getEnrollmentPaymentDetails,
   deleteEnrollment,
   getEnrollmentStats,
 } = require("../controllers/enrollmentController");
@@ -405,6 +407,8 @@ router.get("/enrollments/check/:courseId",     protect, checkEnrollment);
 router.get("/admin/enrollments/stats",         protect, adminOnly, getEnrollmentStats);
 router.get("/admin/enrollments",               protect, adminOnly, getAllEnrollments);
 router.put("/admin/enrollments/:id/review",    protect, adminOnly, reviewEnrollment);
+router.put("/admin/enrollments/:id/revoke",    protect, adminOnly, revokeEnrollment);
+router.get("/admin/enrollments/:id/payment-details", protect, adminOnly, getEnrollmentPaymentDetails);
 router.delete("/admin/enrollments/:id",        protect, adminOnly, deleteEnrollment);
 
 // ─── STUDENT COURSE PROGRESS (lecture completion + last-watched, persists
@@ -562,6 +566,7 @@ router.post("/wishlist/toggle", protect, toggleWishlist);
 // karon SSLCommerz nijei call kore (kono JWT thake na oi request e)
 const {
   initiatePayment, paymentSuccess, paymentFail, paymentCancel, paymentIPN, getTransactionStatus,
+  getGatewaySettings, updateGatewaySettings, getMyPayments, downloadInvoice, getAllPayments,
 } = require("../controllers/paymentController");
 
 router.post("/payments/sslcommerz/init",              protect, initiatePayment);
@@ -570,5 +575,29 @@ router.post("/payments/sslcommerz/success",            paymentSuccess);
 router.post("/payments/sslcommerz/fail",               paymentFail);
 router.post("/payments/sslcommerz/cancel",              paymentCancel);
 router.post("/payments/sslcommerz/ipn",                paymentIPN);
+router.get("/payments/my",                             protect, getMyPayments);
+router.get("/payments/invoice/:tranId",                protect, downloadInvoice);
+
+// Admin — payment gateway credentials/live-test toggle, .env chara-i
+router.get("/admin/payment-settings",  protect, adminOnly, getGatewaySettings);
+router.put("/admin/payment-settings",  protect, adminOnly, updateGatewaySettings);
+router.get("/admin/payments",          protect, adminOnly, getAllPayments);
+
+// ─── COUPON ANALYTICS (admin) ────────────────────────────────────────────────
+const { getCouponAnalytics } = require("../controllers/couponController");
+router.get("/admin/coupons-analytics", protect, adminOnly, getCouponAnalytics);
+
+// ─── DISCUSSION FORUM (per-lecture Q&A, peer + instructor/admin) ────────────
+const {
+  getLectureDiscussions, getCourseDiscussions, createDiscussion,
+  replyToDiscussion, toggleResolved, deleteDiscussion,
+} = require("../controllers/discussionController");
+
+router.get("/discussions/lecture/:lectureId",  protect, getLectureDiscussions);
+router.get("/discussions/course/:courseId",    protect, getCourseDiscussions);
+router.post("/discussions",                    protect, createDiscussion);
+router.post("/discussions/:id/reply",          protect, replyToDiscussion);
+router.put("/discussions/:id/resolve",         protect, toggleResolved);
+router.delete("/discussions/:id",              protect, deleteDiscussion);
 
 module.exports = router;

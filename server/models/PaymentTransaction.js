@@ -26,7 +26,8 @@ const paymentTransactionSchema = new mongoose.Schema(
     // SSLCommerz theke ashey emon kichu useful field (audit/debug-er jonno)
     valId: { type: String, default: "" },
     bankTranId: { type: String, default: "" },
-    cardType: { type: String, default: "" },
+    cardType: { type: String, default: "" },   // e.g. "bKash", "Nagad", "VISA-Brac bank" — bole dey kon method e paid
+    cardNo: { type: String, default: "" },      // masked number, e.g. "01712XXXXXX34" or "455445XXXXXX4326"
     gatewayRawResponse: { type: mongoose.Schema.Types.Mixed, default: null },
 
     enrollment: { type: mongoose.Schema.Types.ObjectId, ref: "Enrollment", default: null },
